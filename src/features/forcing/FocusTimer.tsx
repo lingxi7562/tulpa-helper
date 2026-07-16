@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTimerStore } from '../../stores/useTimerStore';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useStageStore } from '../../stores/useStageStore';
+import { useToast } from '../../hooks/useToast';
 
 interface Props {
   compact?: boolean;
@@ -13,6 +14,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
   const { timeLeft, isRunning, sessionType, startTimer, pauseTimer, resetTimer, tick, setSessionType } = useTimerStore();
   const { addEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
+  const { show } = useToast();
 
   useEffect(() => {
     if (!isRunning || timeLeft <= 0) return;
@@ -30,6 +32,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
         duration_seconds: 25 * 60,
         content: `番茄钟完成：${sessionType}`,
       });
+      show('番茄钟完成！');
       onComplete?.();
     }
   }, [timeLeft]);
