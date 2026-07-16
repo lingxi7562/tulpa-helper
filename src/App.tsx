@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export type ViewMode = 'panel' | 'timeline';
+type ViewMode = 'panel' | 'timeline';
 
 function App() {
   const [view, setView] = useState<ViewMode>('panel');
@@ -28,7 +28,7 @@ function App() {
       </header>
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex items-center justify-center text-brand-400">
-          <p>面板视图 — 待实现</p>
+          <p>{view === 'panel' ? '📋 面板视图 — 待实现' : '📅 时间线视图 — 待实现'}</p>
         </div>
       </div>
     </div>
