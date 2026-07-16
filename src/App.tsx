@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import FocusTimer from './features/forcing/FocusTimer';
 import PanelLayout from './layouts/PanelLayout';
+import TimelineLayout from './layouts/TimelineLayout';
 
 type ViewMode = 'panel' | 'timeline';
 
@@ -32,11 +33,7 @@ function App() {
         </div>
       </header>
       <div className="flex-1 overflow-hidden">
-        {view === 'panel' ? <PanelLayout onOpenStats={() => {}} /> : (
-          <div className="h-full flex items-center justify-center text-brand-400">
-            <p>📅 时间线视图 — 待实现</p>
-          </div>
-        )}
+        {view === 'panel' ? <PanelLayout onOpenStats={() => {}} /> : <TimelineLayout />}
       </div>
     </div>
   );
