@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "tulpa-helper",
   "version": "0.1.0",
-  "identifier": "com.root.tulpa-helper",
+  "identifier": "com.tulpahelper.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "tulpa-helper",
-        "width": 800,
-        "height": 600
+        "title": "Tulpa Helper",
+        "width": 1024,
+        "height": 720
       }
     ],
     "security": {
