@@ -1,15 +1,6 @@
 import { useEffect } from 'react';
 import { useStageStore } from '../../stores/useStageStore';
-
-const STAGE_ICONS: Record<string, string> = {
-  prep: '🌱', create: '✨', dev: '🗣️', mature: '🤝',
-};
-const STAGE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  prep:  { bg: 'bg-emerald-50',  border: 'border-emerald-300', text: 'text-emerald-700' },
-  create:{ bg: 'bg-amber-50',    border: 'border-amber-300',   text: 'text-amber-700' },
-  dev:   { bg: 'bg-blue-50',     border: 'border-blue-300',    text: 'text-blue-700' },
-  mature:{ bg: 'bg-purple-50',   border: 'border-purple-300',  text: 'text-purple-700' },
-};
+import { STAGES } from '../../constants/stages';
 
 interface Props {
   onOpenStats: () => void;
@@ -28,22 +19,23 @@ export default function StageSidebar({ onOpenStats }: Props) {
           {stages.map((s) => {
             const isUnlocked = !!s.unlocked_at;
             const isActive = activeStageId === s.id;
-            const colors = STAGE_COLORS[s.id] || { bg: '', border: '', text: '' };
+            const stageInfo = STAGES[s.id as keyof typeof STAGES];
+            const colors = stageInfo || { bg: '', border: '', text: '' };
             return (
               <button
                 key={s.id}
-                disabled={!isUnlocked}
-                onClick={() => setActiveStage(s.id)}
+                onClick={async () => {
+                  if (!isUnlocked) await unlock(s.id);
+                  setActiveStage(s.id);
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-all
-                  ${!isUnlocked ? 'opacity-40 cursor-not-allowed' : 'hover:bg-brand-100'}
+                  ${!isUnlocked ? 'opacity-40 cursor-pointer' : 'hover:bg-brand-100'}
                   ${isActive && isUnlocked ? `${colors.bg} ${colors.border} border shadow-sm font-semibold` : 'border border-transparent'}
                 `}
               >
-                <span className="text-base">{STAGE_ICONS[s.id]}</span>
+                <span className="text-base">{stageInfo?.icon}</span>
                 <span className={`flex-1 ${isActive ? colors.text : 'text-brand-800'}`}>{s.name}</span>
-                {!isUnlocked && (
-                  <span className="text-xs text-brand-300 cursor-pointer" onClick={(e) => { e.stopPropagation(); unlock(s.id); }}>🔓</span>
-                )}
+                {!isUnlocked && <span className="text-xs text-brand-300">🔒</span>}
               </button>
             );
           })}

@@ -15,17 +15,37 @@ export const useTraitStore = create<TraitState>((set) => ({
   loading: false,
   loadTraits: async () => {
     set({ loading: true });
-    const rows: any[] = await getTraits();
-    set({ traits: rows, loading: false });
+    try {
+      const rows = await getTraits();
+      set({ traits: rows });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
   },
   addTrait: async (t) => {
-    await createTrait(t);
-    const rows: any[] = await getTraits();
-    set({ traits: rows });
+    set({ loading: true });
+    try {
+      await createTrait(t);
+      const rows = await getTraits();
+      set({ traits: rows });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
   },
   removeTrait: async (id) => {
-    await deleteTrait(id);
-    const rows: any[] = await getTraits();
-    set({ traits: rows });
+    set({ loading: true });
+    try {
+      await deleteTrait(id);
+      const rows = await getTraits();
+      set({ traits: rows });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
   },
 }));

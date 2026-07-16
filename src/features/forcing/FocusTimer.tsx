@@ -3,6 +3,7 @@ import { useTimerStore } from '../../stores/useTimerStore';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useStageStore } from '../../stores/useStageStore';
 import { useToast } from '../../hooks/useToast';
+import type { EntryType } from '../../db/schema';
 
 interface Props {
   compact?: boolean;
@@ -24,18 +25,27 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
 
   useEffect(() => {
     if (timeLeft === 0 && isRunning) {
-      pauseTimer();
-      addEntry({
-        stage_id: activeStageId,
-        type: sessionType as any,
-        title: `${sessionType} 完成`,
-        duration_seconds: 25 * 60,
-        content: `番茄钟完成：${sessionType}`,
-      });
-      show('番茄钟完成！');
-      onComplete?.();
+      const completeSession = async () => {
+        pauseTimer();
+        try {
+          await addEntry({
+            stage_id: activeStageId,
+            type: sessionType as EntryType,
+            title: `${sessionType} 完成`,
+            duration_seconds: 25 * 60,
+            content: `番茄钟完成：${sessionType}`,
+          });
+          show('番茄钟完成！');
+          onComplete?.();
+        } catch (e) {
+          console.error(e);
+        } finally {
+          resetTimer(25 * 60);
+        }
+      };
+      completeSession();
     }
-  }, [timeLeft]);
+  }, [timeLeft, isRunning]);
 
   const types = sessionTypes || [
     { label: 'Narration', value: 'narration' },
@@ -67,7 +77,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
         {types.map((t) => (
           <button
             key={t.value}
-            onClick={() => setSessionType(t.value)}
+            onClick={() => setSessionType(t.value as EntryType)}
             className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
               sessionType === t.value ? 'bg-white shadow-sm text-brand-900' : 'text-brand-500 hover:text-brand-800'
             }`}

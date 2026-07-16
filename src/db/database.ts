@@ -115,7 +115,7 @@ export async function getDurationByStage(): Promise<{ stage_id: string; total: n
   return d.select('SELECT stage_id, SUM(duration_seconds) as total FROM entries WHERE duration_seconds > 0 GROUP BY stage_id');
 }
 
-export async function getDailyDurations(days: number = 7) {
+export async function getDailyDurations(days: number = 7): Promise<{ day: string; total: number }[]> {
   const d = await getDb();
   return d.select(
     `SELECT date(created_at) as day, SUM(duration_seconds) as total

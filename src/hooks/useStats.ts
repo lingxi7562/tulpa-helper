@@ -5,6 +5,7 @@ interface StatsData {
   totalSeconds: number;
   stageBreakdown: { stage_id: string; total: number }[];
   dailyDurations: { day: string; total: number }[];
+  heatmapData: { day: string; total: number }[];
   consecutiveDays: number;
   loading: boolean;
 }
@@ -14,25 +15,40 @@ export function useStats(): StatsData & { refresh: () => void } {
     totalSeconds: 0,
     stageBreakdown: [],
     dailyDurations: [],
+    heatmapData: [],
     consecutiveDays: 0,
     loading: true,
   });
 
   const refresh = useCallback(async () => {
     setData((d) => ({ ...d, loading: true }));
-    const [total, breakdown, daily, consecutive] = await Promise.all([
-      getTotalDuration(),
-      getDurationByStage(),
-      getDailyDurations(7),
-      getConsecutiveDays(),
-    ]);
-    setData({
-      totalSeconds: total,
-      stageBreakdown: breakdown as any[],
-      dailyDurations: daily as any[],
-      consecutiveDays: consecutive,
-      loading: false,
-    });
+    try {
+      const [total, breakdown, daily, heatmap, consecutive]: [
+        number,
+        { stage_id: string; total: number }[],
+        { day: string; total: number }[],
+        { day: string; total: number }[],
+        number,
+      ] = await Promise.all([
+        getTotalDuration(),
+        getDurationByStage(),
+        getDailyDurations(7),
+        getDailyDurations(30),
+        getConsecutiveDays(),
+      ]);
+      setData({
+        totalSeconds: total,
+        stageBreakdown: breakdown,
+        dailyDurations: daily,
+        heatmapData: heatmap,
+        consecutiveDays: consecutive,
+        loading: false,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setData((d) => ({ ...d, loading: false }));
+    }
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);

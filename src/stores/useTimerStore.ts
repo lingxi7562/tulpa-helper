@@ -1,14 +1,15 @@
 import { create } from 'zustand';
+import type { EntryType } from '../db/schema';
 
 interface TimerState {
   timeLeft: number;
   isRunning: boolean;
-  sessionType: string;
+  sessionType: EntryType;
   startTimer: () => void;
   pauseTimer: () => void;
   resetTimer: (seconds?: number) => void;
   tick: () => void;
-  setSessionType: (t: string) => void;
+  setSessionType: (t: EntryType) => void;
 }
 
 export const useTimerStore = create<TimerState>((set) => ({

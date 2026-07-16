@@ -14,20 +14,40 @@ interface StageState {
 
 export const useStageStore = create<StageState>((set, get) => ({
   stages: [],
-  activeStageId: 'create',
+  activeStageId: 'prep',
   loading: false,
   loadStages: async () => {
     set({ loading: true });
-    const rows: any[] = await getStages();
-    set({ stages: rows, loading: false });
+    try {
+      const rows = await getStages();
+      set({ stages: rows });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
   },
   setActiveStage: (id) => set({ activeStageId: id }),
   unlock: async (id) => {
-    await unlockStage(id);
-    await get().loadStages();
+    set({ loading: true });
+    try {
+      await unlockStage(id);
+      await get().loadStages();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
   },
   lock: async (id) => {
-    await lockStage(id);
-    await get().loadStages();
+    set({ loading: true });
+    try {
+      await lockStage(id);
+      await get().loadStages();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
   },
 }));

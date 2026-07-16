@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useStageStore } from '../../stores/useStageStore';
 import { createDialogueMessage } from '../../db/database';
+import type { EntryType } from '../../db/schema';
 
 interface Props {
   onSaved?: () => void;
@@ -16,15 +17,15 @@ export default function ScribbleInput({ onSaved }: Props) {
     if (!text.trim()) return;
     const entryId = await addEntry({
       stage_id: activeStageId,
-      type: 'dialogue' as any,
+      type: 'dialogue' as EntryType,
       title: text.slice(0, 50),
       content: text,
     });
-    const parts = text.split(/(\/T\s)/);
+    const parts = text.split(/(\/[tT]\s*)/g);
     let speaker: 'self' | 'tulpa' = 'self';
     let seq = 0;
     for (const part of parts) {
-      if (part === '/T ') { speaker = 'tulpa'; continue; }
+      if (/^\/[tT]\s*$/.test(part)) { speaker = 'tulpa'; continue; }
       const trimmed = part.trim();
       if (trimmed) {
         await createDialogueMessage({ entry_id: entryId, speaker, content: trimmed, seq: seq++ });

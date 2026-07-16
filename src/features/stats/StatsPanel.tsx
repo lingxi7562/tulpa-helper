@@ -1,12 +1,6 @@
 import { useStats } from '../../hooks/useStats';
 import Heatmap from '../../components/ui/Heatmap';
-
-const STAGE_NAMES: Record<string, { name: string; color: string }> = {
-  prep:   { name: '准备期', color: 'bg-emerald-500' },
-  create: { name: '创建期', color: 'bg-amber-500' },
-  dev:    { name: '发展期', color: 'bg-blue-500' },
-  mature: { name: '成熟期', color: 'bg-purple-500' },
-};
+import { STAGES } from '../../constants/stages';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -20,7 +14,7 @@ interface Props {
 }
 
 export default function StatsPanel({ onClose }: Props) {
-  const { totalSeconds, stageBreakdown, dailyDurations, consecutiveDays, loading } = useStats();
+  const { totalSeconds, stageBreakdown, dailyDurations, heatmapData, consecutiveDays, loading } = useStats();
 
   if (loading) return <div className="p-8 text-brand-400">加载中...</div>;
 
@@ -41,7 +35,7 @@ export default function StatsPanel({ onClose }: Props) {
           <h3 className="font-semibold text-brand-900 mb-4">各阶段时长</h3>
           <div className="space-y-3">
             {stageBreakdown.map((s) => {
-              const info = STAGE_NAMES[s.stage_id] || { name: s.stage_id, color: 'bg-brand-400' };
+              const info = STAGES[s.stage_id as keyof typeof STAGES] || { name: s.stage_id, color: 'bg-brand-400' };
               const pct = totalSeconds > 0 ? (s.total / totalSeconds) * 100 : 0;
               return (
                 <div key={s.stage_id}>
@@ -77,7 +71,7 @@ export default function StatsPanel({ onClose }: Props) {
 
         <div className="bg-white border border-brand-200 rounded-2xl p-5 shadow-sm">
           <h3 className="font-semibold text-brand-900 mb-4">近 30 天</h3>
-          <Heatmap data={dailyDurations.map((d) => ({ date: d.day, value: d.total }))} days={30} />
+          <Heatmap data={heatmapData.map((d) => ({ date: d.day, value: d.total }))} days={30} />
         </div>
       </div>
     </div>
