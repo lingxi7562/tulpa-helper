@@ -1,5 +1,5 @@
 import Database from '@tauri-apps/plugin-sql';
-import { MIGRATIONS, type EntryType, type Speaker } from './schema';
+import { MIGRATIONS, type Entry, type EntryType, type Speaker, type Stage, type Trait } from './schema';
 
 let db: Database | null = null;
 
@@ -14,7 +14,7 @@ export async function getDb(): Promise<Database> {
 }
 
 // === CRUD：stages ===
-export async function getStages() {
+export async function getStages(): Promise<Stage[]> {
   const d = await getDb();
   return d.select('SELECT * FROM stages ORDER BY "order"');
 }
@@ -30,7 +30,7 @@ export async function lockStage(id: string) {
 }
 
 // === CRUD：entries ===
-export async function getEntries(stageId?: string, limit = 50, offset = 0) {
+export async function getEntries(stageId?: string, limit = 50, offset = 0): Promise<Entry[]> {
   const d = await getDb();
   const where = stageId ? 'WHERE stage_id = $1' : '';
   const params = stageId ? [stageId] : [];
@@ -57,7 +57,7 @@ export async function deleteEntry(id: number) {
 }
 
 // === CRUD：traits ===
-export async function getTraits() {
+export async function getTraits(): Promise<Trait[]> {
   const d = await getDb();
   return d.select('SELECT * FROM traits ORDER BY id DESC');
 }
