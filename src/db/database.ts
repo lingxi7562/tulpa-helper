@@ -1,5 +1,5 @@
 import Database from '@tauri-apps/plugin-sql';
-import { MIGRATIONS } from './schema';
+import { MIGRATIONS, type EntryType, type Speaker } from './schema';
 
 let db: Database | null = null;
 
@@ -38,7 +38,7 @@ export async function getEntries(stageId?: string, limit = 50, offset = 0) {
 }
 
 export async function createEntry(entry: {
-  stage_id: string; type: string; title: string; content?: string;
+  stage_id: string; type: EntryType; title: string; content?: string;
   tags?: string; duration_seconds?: number; mood?: number;
 }) {
   const d = await getDb();
@@ -81,7 +81,7 @@ export async function getDialogueMessages(entryId: number) {
   return d.select('SELECT * FROM dialogue_messages WHERE entry_id = $1 ORDER BY seq', [entryId]);
 }
 
-export async function createDialogueMessage(msg: { entry_id: number; speaker: string; content: string; seq: number }) {
+export async function createDialogueMessage(msg: { entry_id: number; speaker: Speaker; content: string; seq: number }) {
   const d = await getDb();
   await d.execute(
     'INSERT INTO dialogue_messages (entry_id, speaker, content, seq) VALUES ($1, $2, $3, $4)',
