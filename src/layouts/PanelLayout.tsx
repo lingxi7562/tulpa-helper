@@ -2,6 +2,7 @@ import StageSidebar from '../features/stages/StageSidebar';
 import PrepPanel from '../features/stages/PrepPanel';
 import CreationPanel from '../features/stages/CreationPanel';
 import DevelopmentPanel from '../features/stages/DevelopmentPanel';
+import MaturePanel from '../features/stages/MaturePanel';
 import { useStageStore } from '../stores/useStageStore';
 
 interface Props {
@@ -16,7 +17,7 @@ export default function PanelLayout({ onOpenStats }: Props) {
       case 'prep': return <PrepPanel />;
       case 'create': return <CreationPanel />;
       case 'dev': return <DevelopmentPanel />;
-      case 'mature': return <p className="p-8 text-brand-400">成熟期 — 待实现</p>;
+      case 'mature': return <MaturePanel />;
       default: return <p className="p-8 text-brand-400">选择或解锁一个阶段</p>;
     }
   };
