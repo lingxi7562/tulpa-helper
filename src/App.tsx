@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import FocusTimer from './features/forcing/FocusTimer';
 import PanelLayout from './layouts/PanelLayout';
 
 type ViewMode = 'panel' | 'timeline';
@@ -13,18 +14,21 @@ function App() {
           <div className="w-6 h-6 bg-brand-900 rounded-md flex items-center justify-center text-white text-xs font-bold">T</div>
           <span className="font-semibold text-brand-900">Tulpa Helper</span>
         </div>
-        <div className="flex bg-brand-100 p-1 rounded-lg">
-          {(['panel', 'timeline'] as ViewMode[]).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                view === v ? 'bg-white text-brand-900 shadow-sm' : 'text-brand-500 hover:text-brand-900'
-              }`}
-            >
-              {v === 'panel' ? '📋 面板' : '📅 时间线'}
-            </button>
-          ))}
+        <div className="flex items-center gap-4">
+          <div className="flex bg-brand-100 p-1 rounded-lg">
+            {(['panel', 'timeline'] as ViewMode[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  view === v ? 'bg-white text-brand-900 shadow-sm' : 'text-brand-500 hover:text-brand-900'
+                }`}
+              >
+                {v === 'panel' ? '📋 面板' : '📅 时间线'}
+              </button>
+            ))}
+          </div>
+          <FocusTimer compact />
         </div>
       </header>
       <div className="flex-1 overflow-hidden">
