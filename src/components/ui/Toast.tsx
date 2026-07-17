@@ -13,8 +13,8 @@ export default function Toast({ message, onClose, duration = 3000 }: Props) {
   }, [onClose, duration]);
 
   return (
-    <div className="fixed bottom-6 right-6 bg-brand-900 text-white px-4 py-2.5 rounded-lg shadow-lg z-50 animate-[fadeIn_0.3s_ease-out]">
-      ✅ {message}
+    <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-white/20 bg-brand-900/95 px-5 py-3.5 text-sm font-medium text-white shadow-[0_18px_50px_rgba(63,57,49,0.3)] backdrop-blur-xl animate-[fadeIn_0.35s_ease-out] sm:bottom-7 sm:left-auto sm:right-7 sm:translate-x-0">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-xs">✓</span>{message}
     </div>
   );
 }

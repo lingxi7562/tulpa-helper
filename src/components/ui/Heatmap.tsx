@@ -9,7 +9,7 @@ interface Props {
 }
 
 function getColor(value: number): string {
-  if (value === 0) return 'bg-gray-100';
+  if (value === 0) return 'bg-brand-100';
   if (value < 300) return 'bg-emerald-100';
   if (value < 900) return 'bg-emerald-300';
   if (value < 1800) return 'bg-emerald-400';
@@ -27,12 +27,12 @@ export default function Heatmap({ data, days = 30 }: Props) {
   }
 
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="flex flex-wrap gap-1.5">
       {cells.map((c) => (
         <div
           key={c.date}
           title={`${c.date}: ${Math.round(c.value / 60)}分钟`}
-          className={`w-3 h-3 rounded-sm ${getColor(c.value)}`}
+          className={`h-4 w-4 rounded-[5px] ring-1 ring-black/[0.02] transition-all duration-200 hover:z-10 hover:scale-150 hover:ring-2 hover:ring-white ${getColor(c.value)}`}
         />
       ))}
     </div>

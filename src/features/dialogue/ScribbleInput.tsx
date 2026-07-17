@@ -37,9 +37,10 @@ export default function ScribbleInput({ onSaved }: Props) {
   };
 
   return (
-    <div className="bg-white border border-brand-200 rounded-2xl p-4 shadow-sm">
-      <div className="text-xs text-brand-400 mb-2">
-        输入内容，用 <code className="bg-brand-100 px-1 rounded">/T</code> 标记 tulpa 的回应
+    <div className="group rounded-[28px] border border-white/80 bg-white/85 p-5 shadow-[0_16px_45px_rgba(74,63,50,0.08)] transition-all duration-300 hover:shadow-[0_20px_55px_rgba(74,63,50,0.12)] sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div><h3 className="font-bold text-brand-900">随手记下此刻</h3><p className="mt-1 text-xs leading-relaxed text-brand-400">不必整理语言，真实的片刻本就珍贵</p></div>
+        <span className="rounded-xl bg-brand-100 px-2.5 py-1.5 text-[10px] font-bold text-brand-600">速记</span>
       </div>
       <textarea
         value={text}
@@ -50,15 +51,15 @@ export default function ScribbleInput({ onSaved }: Props) {
             parseAndSave();
           }
         }}
-        className="w-full border border-brand-200 rounded-lg p-3 text-sm resize-none outline-none focus:border-brand-500 min-h-[80px]"
-        placeholder="记录你与 tulpa 的交流… (Ctrl+Enter 保存)"
+        className="min-h-[112px] w-full resize-none rounded-2xl border border-brand-200/80 bg-brand-50/60 p-4 text-sm leading-7 text-brand-900 outline-none transition-all placeholder:text-brand-300 focus:border-brand-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(212,201,179,0.22)]"
+        placeholder="写下你们刚刚说过的话，或一个微小的感受……"
       />
-      <div className="flex justify-between items-center mt-2">
-        <span className="text-[10px] text-brand-300">Ctrl+Enter 保存并解析</span>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className="text-[10px] leading-5 text-brand-400">用 <code className="rounded-md bg-brand-100 px-1.5 py-0.5 font-bold text-brand-600">/T</code> 标记回应 · Ctrl+Enter 保存</span>
         <button
           onClick={parseAndSave}
           disabled={!text.trim()}
-          className="bg-brand-900 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-brand-800 disabled:opacity-40"
+          className="rounded-xl bg-brand-900 px-5 py-2.5 text-xs font-bold text-white shadow-[0_8px_20px_rgba(74,63,50,0.2)] transition-all hover:-translate-y-0.5 hover:bg-brand-700 disabled:translate-y-0 disabled:opacity-30 disabled:shadow-none"
         >
           保存
         </button>

@@ -23,9 +23,9 @@ export default function PanelLayout({ onOpenStats }: Props) {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="relative z-10 flex h-full">
       <StageSidebar onOpenStats={onOpenStats} />
-      <main className="flex-1 overflow-y-auto bg-brand-50">
+      <main className="flex-1 overflow-y-auto bg-transparent">
         {renderPanel()}
       </main>
     </div>

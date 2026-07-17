@@ -14,34 +14,34 @@ export default function TraitManager() {
   };
 
   return (
-    <div className="bg-white border border-brand-200 rounded-2xl p-5 mb-4 shadow-sm">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-brand-900">🧬 性格特质蓝图</h3>
-        <span className="text-xs text-brand-500 bg-brand-100 px-2 py-1 rounded-md">{traits.length} 项</span>
+    <div className="mb-5 rounded-[28px] border border-white/80 bg-white/85 p-5 shadow-[0_16px_45px_rgba(74,63,50,0.08)] sm:p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <div><h3 className="font-bold text-brand-900">性格特质蓝图</h3><p className="mt-1 text-xs text-brand-400">用温柔而清晰的词语描绘独特个性</p></div>
+        <span className="rounded-full bg-stage-prep/10 px-3 py-1 text-xs font-bold text-emerald-700">{traits.length} 项</span>
       </div>
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="mb-5 flex min-h-8 flex-wrap gap-2">
         {traits.map((t) => (
-          <span key={t.id} className="px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-full text-sm text-brand-800 flex items-center gap-2 group">
+          <span key={t.id} className="group flex items-center gap-2 rounded-full border border-brand-200 bg-gradient-to-b from-white to-brand-50 px-3.5 py-2 text-sm text-brand-800 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300">
             {t.name}
-            <button onClick={() => removeTrait(t.id)} className="text-brand-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+            <button onClick={() => removeTrait(t.id)} className="text-brand-300 opacity-50 transition-all hover:text-red-500 group-hover:opacity-100">×</button>
           </span>
         ))}
       </div>
       {showForm ? (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 rounded-2xl bg-brand-50 p-2">
           <input
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="flex-1 border border-brand-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-500"
+            className="min-w-40 flex-1 rounded-xl border border-brand-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-200/40"
             placeholder="输入特质名称..."
           />
-          <button onClick={handleAdd} className="bg-brand-900 text-white px-3 py-1.5 rounded-lg text-sm">保存</button>
-          <button onClick={() => setShowForm(false)} className="text-brand-500 px-2 text-sm">取消</button>
+          <button onClick={handleAdd} className="rounded-xl bg-brand-900 px-4 py-2 text-sm font-semibold text-white">保存</button>
+          <button onClick={() => setShowForm(false)} className="px-2 text-sm text-brand-500 hover:text-brand-900">取消</button>
         </div>
       ) : (
-        <button onClick={() => setShowForm(true)} className="w-full py-2.5 border border-dashed border-brand-300 rounded-lg text-sm text-brand-500 hover:bg-brand-50 transition-colors">
+        <button onClick={() => setShowForm(true)} className="w-full rounded-2xl border border-dashed border-brand-300 py-3 text-sm font-medium text-brand-500 transition-all hover:border-brand-400 hover:bg-brand-50 hover:text-brand-800">
           + 添加新特质
         </button>
       )}
