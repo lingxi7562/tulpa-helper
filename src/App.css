@@ -1,6 +1,21 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #FDFBF7;
+  --color-brand-100: #F5F2EA;
+  --color-brand-200: #EAE4D6;
+  --color-brand-300: #D4C9B3;
+  --color-brand-400: #A39171;
+  --color-brand-500: #8B7A5E;
+  --color-brand-600: #6B5D4A;
+  --color-brand-700: #4A3F32;
+  --color-brand-800: #5C4F3C;
+  --color-brand-900: #3F3931;
+  --color-stage-prep: #10B981;
+  --color-stage-create: #F59E0B;
+  --color-stage-dev: #3B82F6;
+  --color-stage-mature: #8B5CF6;
+}
 
 @layer base {
   :root {
