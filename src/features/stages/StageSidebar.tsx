@@ -1,51 +1,34 @@
 import { useEffect } from 'react';
 import { useStageStore } from '../../stores/useStageStore';
 import { STAGES } from '../../constants/stages';
+import Button from '../../components/ui/Button';
 
-interface Props {
-  onOpenStats: () => void;
-}
+interface Props { onOpenStats: () => void; }
 
 export default function StageSidebar({ onOpenStats }: Props) {
   const { stages, activeStageId, setActiveStage, loadStages, unlock } = useStageStore();
-
-  useEffect(() => { loadStages(); }, []);
+  useEffect(() => { loadStages(); }, [loadStages]);
 
   return (
-    <aside className="relative z-10 flex w-[76px] shrink-0 flex-col border-r border-brand-200/70 bg-white/55 backdrop-blur-sm sm:w-64">
-      <div className="px-2 py-6 sm:px-5 sm:py-8">
-        <div className="mb-5 hidden items-center gap-2 px-2 text-[10px] font-bold tracking-[0.24em] text-brand-400 sm:flex"><span className="h-px w-5 bg-brand-300" />成长旅程</div>
-        <nav className="space-y-2">
-          {stages.map((s) => {
-            const isUnlocked = !!s.unlocked_at;
-            const isActive = activeStageId === s.id;
-            const stageInfo = STAGES[s.id as keyof typeof STAGES];
-            const colors = stageInfo || { bg: '', border: '', text: '' };
+    <aside className="relative z-40 flex min-h-0 w-full flex-col overflow-hidden border-r border-brand-200/80 bg-white/58 backdrop-blur-md">
+      <div className="overflow-y-auto px-2 py-5 sm:px-4 sm:py-7">
+        <div className="mb-4 hidden items-center gap-2 px-3 sm:flex"><span className="h-px w-5 bg-brand-300" /><span className="eyebrow">成长旅程</span></div>
+        <nav className="space-y-2" aria-label="成长阶段">
+          {stages.map((stage) => {
+            const info = STAGES[stage.id as keyof typeof STAGES];
+            const unlocked = !!stage.unlocked_at;
+            const active = activeStageId === stage.id;
             return (
-              <button
-                key={s.id}
-                onClick={async () => {
-                  if (!isUnlocked) await unlock(s.id);
-                  setActiveStage(s.id);
-                }}
-                className={`group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border px-2 py-3.5 text-left text-sm transition-all duration-300 sm:justify-start sm:px-4
-                  ${!isUnlocked ? 'cursor-pointer opacity-40 grayscale' : 'hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_8px_24px_rgba(74,63,50,0.08)]'}
-                  ${isActive && isUnlocked ? `${colors.bg} ${colors.border} font-semibold shadow-[0_10px_28px_rgba(74,63,50,0.1)] before:absolute before:bottom-2 before:left-0 before:top-2 before:w-1 before:rounded-r-full before:bg-current` : 'border-transparent'}
-                `}
-              >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/80 text-lg shadow-sm transition-transform duration-300 group-hover:scale-110 ${isActive ? colors.text : ''}`}>{stageInfo?.icon}</span>
-                <span className={`hidden flex-1 sm:block ${isActive ? colors.text : 'text-brand-800'}`}>{s.name}</span>
-                {!isUnlocked && <span className="hidden text-[10px] text-brand-300 sm:block">锁定</span>}
-              </button>
+              <Button key={stage.id} variant="ghost" onClick={async () => { if (!unlocked) await unlock(stage.id); setActiveStage(stage.id); }} className={`relative h-auto w-full !justify-center !rounded-2xl !px-2 !py-3 sm:!justify-start sm:!px-3 ${!unlocked ? 'opacity-45 grayscale' : ''} ${active ? `${info?.bg} ${info?.text} ring-1 ring-inset ${info?.border} shadow-[0_8px_20px_rgba(63,57,49,.07)]` : 'text-brand-600'}`}>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-lg shadow-sm">{info?.icon}</span>
+                <span className="hidden min-w-0 flex-1 truncate text-left sm:block">{stage.name}</span>
+                {!unlocked && <span className="hidden text-[9px] font-bold tracking-wider text-brand-400 sm:block">解锁</span>}
+              </Button>
             );
           })}
         </nav>
       </div>
-      <div className="mt-auto border-t border-brand-200/70 p-2 sm:p-5">
-        <button onClick={onOpenStats} className="flex w-full items-center justify-center gap-3 rounded-2xl border border-transparent px-2 py-3 text-left text-xs font-semibold text-brand-500 transition-all hover:border-brand-200 hover:bg-white hover:text-brand-900 hover:shadow-sm sm:justify-start sm:px-4">
-          <span className="text-base">◔</span><span className="hidden sm:inline">时间统计</span>
-        </button>
-      </div>
+      <div className="mt-auto border-t border-brand-200/70 p-2 sm:p-4"><Button variant="ghost" fullWidth onClick={onOpenStats} className="!justify-center !rounded-2xl sm:!justify-start" icon="◔"><span className="hidden sm:inline">时间统计</span></Button></div>
     </aside>
   );
 }

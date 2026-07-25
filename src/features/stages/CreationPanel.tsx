@@ -3,38 +3,19 @@ import FocusTimer from '../forcing/FocusTimer';
 import ScribbleInput from '../dialogue/ScribbleInput';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { STAGES } from '../../constants/stages';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
 
 export default function CreationPanel() {
   const { entries, loadEntries } = useEntryStore();
-
-  useEffect(() => { loadEntries('create'); }, []);
-
-  const stats = {
-    sessions: entries.filter(e => e.type === 'session' || e.type === 'narration').length,
-    dialogue: entries.filter(e => e.type === 'dialogue').length,
-    signals: entries.filter(e => e.type === 'signal').length,
-  };
-
+  useEffect(() => { loadEntries('create'); }, [loadEntries]);
+  const stats = { sessions: entries.filter(e => e.type === 'session' || e.type === 'narration').length, dialogue: entries.filter(e => e.type === 'dialogue').length, signals: entries.filter(e => e.type === 'signal').length };
+  const items = [{ icon: '⏱', label: '专注会话', value: stats.sessions, unit: '次' }, { icon: '💬', label: '对话记录', value: stats.dialogue, unit: '条' }, { icon: '⚡', label: '回应迹象', value: stats.signals, unit: '次' }, { icon: '🔥', label: '连续坚持', value: '—', unit: '统计中' }];
   return (
-    <div className="relative z-10 mx-auto max-w-4xl space-y-5 px-4 py-8 animate-[fadeIn_0.5s_ease-out] sm:px-8 sm:py-10">
-      <div className="relative mb-8 overflow-hidden rounded-[32px] border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-brand-50 p-6 shadow-[0_20px_55px_rgba(245,158,11,0.1)] sm:p-8">
-        <div className="absolute -right-8 -top-10 text-[120px] opacity-[0.07]">{STAGES.create.icon}</div>
-        <div className="relative flex items-center gap-4"><span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl shadow-[0_10px_24px_rgba(245,158,11,0.15)]">{STAGES.create.icon}</span><div><p className="mb-1 text-[10px] font-bold tracking-[0.24em] text-amber-600">CHAPTER 02</p><h2 className="text-2xl font-bold tracking-tight text-brand-900 sm:text-3xl">{STAGES.create.name}</h2><p className="mt-1 text-sm leading-6 text-brand-500">在持续的专注与交流里，感受生命力逐渐清晰。</p></div></div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[{ icon: '⏱', label: '专注会话', value: `${stats.sessions}`, unit: '次' }, { icon: '💬', label: '对话记录', value: `${stats.dialogue}`, unit: '条' }, { icon: '⚡', label: '回应迹象', value: `${stats.signals}`, unit: '次' }, { icon: '🔥', label: '连续坚持', value: '—', unit: '统计中' }].map((item) => (
-          <div key={item.label} className="group rounded-[22px] border border-amber-200/50 bg-white/80 p-4 shadow-[0_10px_30px_rgba(74,63,50,0.06)] transition-all hover:-translate-y-1 hover:border-amber-300 hover:shadow-[0_16px_38px_rgba(245,158,11,0.1)]"><div className="mb-3 flex items-start justify-between"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-base">{item.icon}</span><span className="text-2xl font-bold text-brand-900">{item.value}</span></div><div className="text-xs font-bold text-brand-700">{item.label}</div><div className="mt-0.5 text-[10px] text-brand-400">{item.unit}</div></div>
-        ))}
-      </div>
-
-      <FocusTimer
-        sessionTypes={[
-          { label: 'Narration', value: 'narration' },
-          { label: 'Active Forcing', value: 'session' },
-        ]}
-      />
-
+    <div className="panel-page space-y-5">
+      <Card hoverable={false} padding="lg" className="relative border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-brand-50"><div className="pointer-events-none absolute -right-7 -top-10 text-[128px] opacity-[.055]">{STAGES.create.icon}</div><div className="relative flex items-center gap-4"><span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-2xl shadow-[0_10px_24px_rgba(245,158,11,.14)]">{STAGES.create.icon}</span><div><Badge variant="create">CHAPTER 02</Badge><h1 className="mt-3 text-2xl font-black text-brand-900 sm:text-3xl">{STAGES.create.name}</h1><p className="mt-1 text-sm leading-6 text-brand-500">在持续的专注与交流里，感受生命力逐渐清晰。</p></div></div></Card>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{items.map(item => <Card key={item.label} padding="sm"><div className="mb-4 flex items-start justify-between gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50">{item.icon}</span><strong className="text-2xl text-brand-900">{item.value}</strong></div><p className="text-xs font-black text-brand-700">{item.label}</p><p className="mt-1 text-[10px] text-brand-400">{item.unit}</p></Card>)}</div>
+      <FocusTimer sessionTypes={[{ label: 'Narration', value: 'narration' }, { label: 'Active Forcing', value: 'session' }]} />
       <ScribbleInput />
     </div>
   );

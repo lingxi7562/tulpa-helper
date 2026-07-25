@@ -4,65 +4,46 @@ import StatsPanel from './features/stats/StatsPanel';
 import PanelLayout from './layouts/PanelLayout';
 import TimelineLayout from './layouts/TimelineLayout';
 import Toast from './components/ui/Toast';
+import Button from './components/ui/Button';
 import { useToast } from './hooks/useToast';
 
 type ViewMode = 'panel' | 'timeline';
+
+function Brand() {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-brand-900 text-sm font-black text-white shadow-[0_9px_22px_rgba(63,57,49,.2)]">T</div>
+      <div className="hidden min-w-0 sm:block">
+        <span className="block truncate text-[13px] font-black tracking-[.12em] text-brand-900">TULPA HELPER</span>
+        <span className="block truncate text-[10px] tracking-[.16em] text-brand-400">与你并肩的每一天</span>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [view, setView] = useState<ViewMode>('panel');
   const [showStats, setShowStats] = useState(false);
   const { message, hide } = useToast();
 
-  if (showStats) {
-    return (
-      <>
-        <div className="flex h-screen flex-col overflow-hidden bg-brand-50">
-          <header className="z-30 flex h-[72px] shrink-0 items-center border-b border-white/70 bg-brand-50/80 px-5 shadow-[0_8px_30px_rgba(74,63,50,0.05)] backdrop-blur-xl sm:px-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 text-sm font-bold text-white shadow-[0_8px_20px_rgba(74,63,50,0.22)]">T</div>
-              <div>
-                <span className="block text-sm font-bold tracking-[0.08em] text-brand-900">TULPA HELPER</span>
-                <span className="block text-[10px] tracking-[0.18em] text-brand-400">与你并肩的每一天</span>
-              </div>
-            </div>
-          </header>
-          <StatsPanel onClose={() => setShowStats(false)} />
-        </div>
-        {message && <Toast message={message} onClose={hide} />}
-      </>
-    );
-  }
-
   return (
     <>
-      <div className="flex h-screen flex-col overflow-hidden bg-brand-50">
-        <header className="z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-white/70 bg-brand-50/80 px-4 shadow-[0_8px_30px_rgba(74,63,50,0.05)] backdrop-blur-xl sm:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 text-sm font-bold text-white shadow-[0_8px_20px_rgba(74,63,50,0.22)]">T</div>
-            <div className="hidden sm:block">
-              <span className="block text-sm font-bold tracking-[0.08em] text-brand-900">TULPA HELPER</span>
-              <span className="block text-[10px] tracking-[0.18em] text-brand-400">与你并肩的每一天</span>
+      <div className="app-surface grid h-dvh grid-rows-[72px_minmax(0,1fr)] overflow-hidden">
+        <header className="relative z-50 flex h-[72px] items-center justify-between border-b border-brand-200/75 bg-[#fdfbf7]/85 px-4 shadow-[0_8px_28px_rgba(63,57,49,.045)] backdrop-blur-xl sm:px-7">
+          <Brand />
+          {!showStats && (
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex items-center rounded-full border border-brand-200 bg-brand-100/75 p-1 shadow-inner">
+                <Button variant={view === 'panel' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('panel')} className={view === 'panel' ? 'border-white bg-white' : ''}>◫ <span className="hidden sm:inline">面板</span></Button>
+                <Button variant={view === 'timeline' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('timeline')} className={view === 'timeline' ? 'border-white bg-white' : ''}>⌁ <span className="hidden sm:inline">时间线</span></Button>
+              </div>
+              <FocusTimer compact />
             </div>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-5">
-            <div className="flex rounded-2xl border border-brand-200/70 bg-brand-100/70 p-1 shadow-inner">
-              {(['panel', 'timeline'] as ViewMode[]).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-300 sm:px-4 ${
-                    view === v ? 'bg-white text-brand-900 shadow-[0_4px_14px_rgba(74,63,50,0.1)]' : 'text-brand-500 hover:bg-white/50 hover:text-brand-900'
-                  }`}
-                >
-                  {v === 'panel' ? '◫ 面板' : '⌁ 时间线'}
-                </button>
-              ))}
-            </div>
-            <FocusTimer compact />
-          </div>
+          )}
+          {showStats && <span className="rounded-full bg-brand-100 px-3 py-1.5 text-[11px] font-bold text-brand-500">时间统计</span>}
         </header>
-        <div className="relative flex-1 overflow-hidden before:pointer-events-none before:absolute before:inset-0 before:z-0 before:bg-[radial-gradient(circle_at_82%_8%,rgba(212,201,179,0.25),transparent_30%),radial-gradient(circle_at_18%_90%,rgba(245,158,11,0.06),transparent_26%)]">
-          {view === 'panel' ? <PanelLayout onOpenStats={() => setShowStats(true)} /> : <TimelineLayout />}
+        <div className="relative z-10 min-h-0 overflow-hidden">
+          {showStats ? <StatsPanel onClose={() => setShowStats(false)} /> : view === 'panel' ? <PanelLayout onOpenStats={() => setShowStats(true)} /> : <TimelineLayout />}
         </div>
       </div>
       {message && <Toast message={message} onClose={hide} />}
