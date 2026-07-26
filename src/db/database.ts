@@ -77,6 +77,19 @@ export async function deleteEntry(id: number) {
   await d.execute('DELETE FROM entries WHERE id = $1', [id]);
 }
 
+export async function updateEntry(id: number, fields: { title?: string; content?: string; mood?: number; tags?: string }) {
+  const d = await getDb();
+  const sets: string[] = [];
+  const values: (string | number)[] = [];
+  if (fields.title !== undefined) { sets.push('title = $' + (values.length + 1)); values.push(fields.title); }
+  if (fields.content !== undefined) { sets.push('content = $' + (values.length + 1)); values.push(fields.content); }
+  if (fields.mood !== undefined) { sets.push('mood = $' + (values.length + 1)); values.push(fields.mood); }
+  if (fields.tags !== undefined) { sets.push('tags = $' + (values.length + 1)); values.push(fields.tags); }
+  if (!sets.length) return;
+  values.push(id);
+  await d.execute(`UPDATE entries SET ${sets.join(', ')} WHERE id = $${values.length}`, values);
+}
+
 // === CRUD：traits ===
 export async function getTraits(): Promise<Trait[]> {
   const d = await getDb();
@@ -219,6 +232,14 @@ export async function getMilestones(stageId?: string) {
   const where = stageId ? 'WHERE stage_id = $1' : '';
   const params = stageId ? [stageId] : [];
   return d.select(`SELECT * FROM milestones ${where} ORDER BY achieved_at DESC`, params);
+}
+
+export async function createMilestone(stageId: string, title: string, notes: string = '') {
+  const d = await getDb();
+  await d.execute(
+    "INSERT INTO milestones (stage_id, title, achieved_at, notes) VALUES ($1, $2, datetime('now','localtime'), $3)",
+    [stageId, title, notes]
+  );
 }
 
 // === 统计查询 ===

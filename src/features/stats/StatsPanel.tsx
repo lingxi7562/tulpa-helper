@@ -4,6 +4,7 @@ import { STAGES } from '../../constants/stages';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import MilestoneList from '../journal/MilestoneList';
 
 function formatDuration(seconds: number) { const hours = Math.floor(seconds / 3600); const minutes = Math.floor((seconds % 3600) / 60); return hours > 0 ? `${hours} 小时 ${minutes} 分钟` : `${minutes} 分钟`; }
 interface Props { onClose: () => void; }
@@ -21,6 +22,7 @@ export default function StatsPanel({ onClose }: Props) {
           <Card hoverable={false}><div className="mb-5"><h2 className="font-black text-brand-900">近 7 天趋势</h2><p className="mt-1 text-xs text-brand-400">无需每天完美，保持自己的节奏。</p></div><div className="flex h-44 items-end gap-2 rounded-2xl bg-brand-50/75 px-3 pb-3 pt-5">{dailyDurations.length ? dailyDurations.map(item => { const max = Math.max(...dailyDurations.map(day => day.total), 1); const height = Math.max(5, item.total / max * 100); return <div key={item.day} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><span className="text-[9px] text-brand-500">{Math.round(item.total / 60)}m</span><div className="w-full max-w-8 rounded-t-lg bg-brand-500 shadow-sm transition-colors hover:bg-brand-700" style={{ height: `${height}%` }} /><span className="text-[9px] text-brand-400">{item.day.slice(5)}</span></div>; }) : <div className="grid h-full w-full place-items-center text-xs text-brand-400">本周还没有专注记录</div>}</div></Card>
         </div>
         <Card hoverable={false}><div className="mb-6 flex items-end justify-between gap-4"><div><h2 className="font-black text-brand-900">近 30 天</h2><p className="mt-1 text-xs text-brand-400">每一个有颜色的格子，都是一次靠近。</p></div><span className="hidden text-[10px] text-brand-400 sm:block">少　<span className="inline-block h-3 w-3 rounded bg-brand-100" /> <span className="inline-block h-3 w-3 rounded bg-emerald-300" /> <span className="inline-block h-3 w-3 rounded bg-emerald-700" />　多</span></div><Heatmap data={heatmapData.map(item => ({ date: item.day, value: item.total }))} days={30} /></Card>
+        <MilestoneList />
       </div>
     </main>
   );

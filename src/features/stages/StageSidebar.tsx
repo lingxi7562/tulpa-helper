@@ -3,11 +3,17 @@ import { useStageStore } from '../../stores/useStageStore';
 import { STAGES } from '../../constants/stages';
 import Button from '../../components/ui/Button';
 
-interface Props { onOpenStats: () => void; }
+interface Props { onOpenStats: () => void; onNavigate?: () => void; }
 
-export default function StageSidebar({ onOpenStats }: Props) {
+export default function StageSidebar({ onOpenStats, onNavigate }: Props) {
   const { stages, activeStageId, setActiveStage, loadStages, unlock } = useStageStore();
   useEffect(() => { loadStages(); }, [loadStages]);
+
+  const handleStageClick = async (stageId: string, unlocked: boolean) => {
+    if (!unlocked) await unlock(stageId);
+    setActiveStage(stageId);
+    onNavigate?.();
+  };
 
   return (
     <aside className="relative z-40 flex min-h-0 w-full flex-col overflow-hidden border-r border-brand-200/80 bg-white/58 backdrop-blur-md">
@@ -19,7 +25,7 @@ export default function StageSidebar({ onOpenStats }: Props) {
             const unlocked = !!stage.unlocked_at;
             const active = activeStageId === stage.id;
             return (
-              <Button key={stage.id} variant="ghost" onClick={async () => { if (!unlocked) await unlock(stage.id); setActiveStage(stage.id); }} className={`relative h-auto w-full !justify-center !rounded-2xl !px-2 !py-3 sm:!justify-start sm:!px-3 ${!unlocked ? 'opacity-45 grayscale' : ''} ${active ? `${info?.bg} ${info?.text} ring-1 ring-inset ${info?.border} shadow-[0_8px_20px_rgba(63,57,49,.07)]` : 'text-brand-600'}`}>
+              <Button key={stage.id} variant="ghost" onClick={() => handleStageClick(stage.id, unlocked)} className={`relative h-auto w-full !justify-center !rounded-2xl !px-2 !py-3 sm:!justify-start sm:!px-3 ${!unlocked ? 'opacity-45 grayscale' : ''} ${active ? `${info?.bg} ${info?.text} ring-1 ring-inset ${info?.border} shadow-[0_8px_20px_rgba(63,57,49,.07)]` : 'text-brand-600'}`}>
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-lg shadow-sm">{info?.icon}</span>
                 <span className="hidden min-w-0 flex-1 truncate text-left sm:block">{stage.name}</span>
                 {!unlocked && <span className="hidden text-[9px] font-bold tracking-wider text-brand-400 sm:block">解锁</span>}
