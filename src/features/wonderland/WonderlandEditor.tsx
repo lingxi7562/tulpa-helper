@@ -7,6 +7,23 @@ import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
 import type { Entry } from '../../db/schema';
 
+const DRAFT_KEY_PREFIX = 'wonderland-draft-';
+
+function loadDraft(stageId: string): string {
+  try { return localStorage.getItem(DRAFT_KEY_PREFIX + stageId) || ''; }
+  catch { return ''; }
+}
+
+function saveDraft(stageId: string, text: string) {
+  try { localStorage.setItem(DRAFT_KEY_PREFIX + stageId, text); }
+  catch { /* noop */ }
+}
+
+function clearDraft(stageId: string) {
+  try { localStorage.removeItem(DRAFT_KEY_PREFIX + stageId); }
+  catch { /* noop */ }
+}
+
 interface Props {
   stageId?: string;
 }
@@ -15,7 +32,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
   const { addEntry } = useEntryStore();
   const [versions, setVersions] = useState<Entry[]>([]);
   const [currentVersion, setCurrentVersion] = useState<Entry | null>(null);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(() => loadDraft(stageId));
   const [saving, setSaving] = useState(false);
 
   const loadVersions = useCallback(async () => {
@@ -29,6 +46,12 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
 
   useEffect(() => { loadVersions(); }, [loadVersions]);
 
+  // 自动保存草稿到 localStorage（防抖 1s）
+  useEffect(() => {
+    const timer = setTimeout(() => saveDraft(stageId, draft), 1000);
+    return () => clearTimeout(timer);
+  }, [draft, stageId]);
+
   const handleSave = async () => {
     if (!draft.trim() || saving) return;
     setSaving(true);
@@ -41,6 +64,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
         content,
       });
       setDraft('');
+      clearDraft(stageId);
       setCurrentVersion(null);
       await loadVersions();
     } catch (error) {
@@ -60,6 +84,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
     if (saving) return;
     setCurrentVersion(null);
     setDraft('');
+    clearDraft(stageId);
   };
 
   const versionLabel = (entry: Entry) => {

@@ -81,10 +81,14 @@ export default function FormBuilder() {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h3 className="font-black text-brand-900">形态设计</h3>
-          <p className="mt-1 text-xs leading-6 text-brand-400">慢慢勾勒熟悉的轮廓与细节。</p>
+          <p className="mt-1 text-xs leading-6 text-brand-400">一个基础轮廓就足够——Ta 会自然长成自己的样子。</p>
         </div>
-        <Badge variant="prep">{formDetails.length} 项</Badge>
+        <Badge variant={formDetails.length >= 5 ? 'prep' : 'prep'}>{formDetails.length} 项</Badge>
       </div>
+
+      {formDetails.length >= 3 && (
+        <p className="mb-3 text-center text-[10px] text-emerald-600 font-bold">✨ 已有基础轮廓，可以开始了</p>
+      )}
 
       <div className="mb-5 flex gap-1 overflow-x-auto rounded-2xl bg-brand-50 p-1">
         {SENSES.map(sense => {
@@ -160,7 +164,7 @@ export default function FormBuilder() {
             )}
           </div>
         )) : (
-          <p className="text-xs text-brand-400 py-2">还没有{activeSenseInfo.label}方面的描述。</p>
+          <p className="text-xs text-brand-400 py-2">不需要面面俱到——想到什么就记下什么。</p>
         )}
       </div>
 
