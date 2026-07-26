@@ -37,6 +37,13 @@ export async function getEntries(stageId?: string, limit = 50, offset = 0): Prom
   return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`, params);
 }
 
+export async function getAllEntries(stageId?: string): Promise<Entry[]> {
+  const d = await getDb();
+  const where = stageId ? 'WHERE stage_id = $1' : '';
+  const params = stageId ? [stageId] : [];
+  return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC`, params);
+}
+
 export async function getWonderlandEntries(stageId?: string): Promise<Entry[]> {
   const d = await getDb();
   if (stageId) {
@@ -278,4 +285,17 @@ export async function getConsecutiveDays(): Promise<number> {
     count++;
   }
   return rows[0]?.day === today ? count : 0;
+}
+
+export async function getStageTypeCounts(stageId: string): Promise<Record<string, number>> {
+  const d = await getDb();
+  const rows = await d.select<{ type: string; count: number }[]>(
+    `SELECT type, COUNT(*) as count FROM entries WHERE stage_id = $1 AND type IN ('session','narration','dialogue','signal') GROUP BY type`,
+    [stageId]
+  );
+  const map: Record<string, number> = { session: 0, narration: 0, dialogue: 0, signal: 0 };
+  for (const row of rows) {
+    map[row.type] = row.count;
+  }
+  return map;
 }

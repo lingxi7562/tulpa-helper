@@ -8,10 +8,38 @@ interface Props {
 
 export default function DialogueDisplay({ entryId }: Props) {
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    getDialogueMessages(entryId).then((rows) => setMessages(rows as DialogueMessage[]));
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    getDialogueMessages(entryId)
+      .then((rows) => {
+        if (!cancelled) setMessages(rows as DialogueMessage[]);
+      })
+      .catch((e) => {
+        console.error(e);
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [entryId]);
+
+  if (loading) return (
+    <div className="mt-4 rounded-2xl bg-brand-50/60 px-4 py-3">
+      <p className="text-[10px] text-brand-400">加载中…</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="mt-4 rounded-2xl bg-red-50/60 px-4 py-3">
+      <p className="text-[10px] text-red-500">对话记录加载失败</p>
+    </div>
+  );
 
   if (!messages.length) return null;
 
