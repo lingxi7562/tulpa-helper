@@ -6,6 +6,8 @@ import TimelineLayout from './layouts/TimelineLayout';
 import Toast from './components/ui/Toast';
 import Button from './components/ui/Button';
 import { useToast } from './hooks/useToast';
+import MilestoneCelebrate from './features/stats/MilestoneCelebrate';
+import { useMilestoneStore } from './stores/useMilestoneStore';
 
 type ViewMode = 'panel' | 'timeline';
 
@@ -25,6 +27,8 @@ function App() {
   const [view, setView] = useState<ViewMode>('panel');
   const [showStats, setShowStats] = useState(false);
   const { message, hide } = useToast();
+  const celebrationLevel = useMilestoneStore(s => s.level);
+  const dismissCelebration = useMilestoneStore(s => s.dismiss);
 
   return (
     <>
@@ -47,6 +51,9 @@ function App() {
         </div>
       </div>
       {message && <Toast message={message} onClose={hide} />}
+      {celebrationLevel !== null && (
+        <MilestoneCelebrate level={celebrationLevel} onClose={dismissCelebration} />
+      )}
     </>
   );
 }

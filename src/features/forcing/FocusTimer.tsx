@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import IconButton from '../../components/ui/IconButton';
 import { Textarea } from '../../components/ui/Input';
+import { useMilestoneStore } from '../../stores/useMilestoneStore';
 
 interface Props { compact?: boolean; sessionTypes?: { label: string; value: string }[]; onComplete?: () => void; }
 
@@ -18,6 +19,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
   const { addEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
   const { show } = useToast();
+  const { checkAndCelebrate } = useMilestoneStore();
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState('');
   const [savingSummary, setSavingSummary] = useState(false);
@@ -47,6 +49,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
         content: `番茄钟完成：${ctx.type}`,
       }).then(() => {
         show('番茄钟完成！');
+        checkAndCelebrate();
         onComplete?.();
         resetTimer();
       }).catch((e) => console.error(e));
@@ -68,6 +71,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
         content: summary.trim() || `番茄钟完成：${ctx.type}`,
       });
       show('番茄钟完成！');
+      await checkAndCelebrate();
       onComplete?.();
     } catch (error) { console.error(error); }
     finally {
@@ -92,6 +96,7 @@ export default function FocusTimer({ compact, sessionTypes, onComplete }: Props)
         content: `番茄钟完成：${ctx.type}`,
       });
       show('番茄钟完成！');
+      await checkAndCelebrate();
       onComplete?.();
     } catch (error) { console.error(error); }
     finally {
