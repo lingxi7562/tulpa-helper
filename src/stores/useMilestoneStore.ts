@@ -1,26 +1,11 @@
 import { create } from 'zustand';
-import { getTotalDuration } from '../db/database';
+import { getTotalDuration, getMilestones, createMilestone } from '../db/database';
+import type { Milestone } from '../db/schema';
 
 const THRESHOLDS = [10, 50, 100] as const;
-const STORAGE_KEY = 'milestones-celebrated';
 
-function getCelebrated(): number[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function markCelebrated(level: number) {
-  try {
-    const celebrated = getCelebrated();
-    if (!celebrated.includes(level)) {
-      celebrated.push(level);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(celebrated));
-    }
-  } catch { /* noop */ }
+function milestoneTitle(hours: number): string {
+  return `累计 ${hours} 小时`;
 }
 
 interface MilestoneState {
@@ -33,16 +18,19 @@ export const useMilestoneStore = create<MilestoneState>((set, get) => ({
   level: null,
 
   checkAndCelebrate: async () => {
-    // 如果已有庆祝正在进行，跳过
     if (get().level !== null) return;
 
     const totalSeconds = await getTotalDuration();
     const totalHours = Math.floor(totalSeconds / 3600);
-    const celebrated = getCelebrated();
+
+    // 从 milestones 表查询已创建的自动里程碑
+    const existing = await getMilestones() as Milestone[];
+    const existingTitles = existing.map(m => m.title);
 
     for (const threshold of THRESHOLDS) {
-      if (totalHours >= threshold && !celebrated.includes(threshold)) {
-        markCelebrated(threshold);
+      if (totalHours >= threshold && !existingTitles.includes(milestoneTitle(threshold))) {
+        // 写入 milestones 表，与手动里程碑合流
+        await createMilestone('mature', milestoneTitle(threshold), `自动达成：累计专注 ${threshold} 小时`);
         set({ level: threshold });
         return;
       }

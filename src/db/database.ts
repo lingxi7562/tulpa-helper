@@ -276,7 +276,7 @@ export async function getDailyDurations(days: number = 7): Promise<{ day: string
   const d = await getDb();
   return d.select(
     `SELECT date(created_at) as day, SUM(duration_seconds) as total
-     FROM entries WHERE duration_seconds > 0 AND created_at >= date('now','-' || $1 || ' days')
+     FROM entries WHERE duration_seconds > 0 AND created_at >= date('now','localtime','-' || $1 || ' days')
      GROUP BY day ORDER BY day`,
     [days]
   );
@@ -289,9 +289,12 @@ export async function getConsecutiveDays(): Promise<number> {
   );
   if (!rows.length) return 0;
   let count = 1;
-  const today = new Date().toISOString().slice(0, 10);
+  // 用本地日期字符串，避免 UTC 时区偏移
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   for (let i = 1; i < rows.length; i++) {
-    const expected = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    const d2 = new Date(Date.now() - i * 86400000);
+    const expected = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`;
     if (expected !== rows[i]?.day) break;
     count++;
   }

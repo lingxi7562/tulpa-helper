@@ -6,6 +6,7 @@ interface EntryState {
   entries: Entry[];
   loading: boolean;
   loadEntries: (stageId?: string, limit?: number, offset?: number, append?: boolean) => Promise<void>;
+  loadAllEntries: (stageId?: string) => Promise<void>;
   addEntry: (e: { stage_id: string; type: EntryType; title: string; content?: string; tags?: string; duration_seconds?: number; mood?: number }) => Promise<number>;
   removeEntry: (id: number) => Promise<void>;
   updateEntry: (id: number, fields: { title?: string; content?: string; mood?: number; tags?: string }) => Promise<void>;
@@ -19,6 +20,17 @@ export const useEntryStore = create<EntryState>((set) => ({
     try {
       const rows = await getEntries(stageId, limit, offset);
       set((s) => ({ entries: append ? [...s.entries, ...rows] : rows }));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+  loadAllEntries: async (stageId) => {
+    set({ loading: true });
+    try {
+      const rows = await getEntries(stageId, 2000, 0);
+      set({ entries: rows });
     } catch (error) {
       console.error(error);
     } finally {
