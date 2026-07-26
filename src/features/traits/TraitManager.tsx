@@ -14,13 +14,23 @@ export default function TraitManager() {
   const [editingWeight, setEditingWeight] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const handleAdd = async () => {
-    if (!name.trim()) return;
-    await addTrait({ name: name.trim(), weight });
-    setName('');
-    setWeight(5);
-    setShowForm(false);
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    try {
+      await addTrait({ name: name.trim(), weight, description: description.trim() });
+      setName('');
+      setDescription('');
+      setWeight(5);
+      setShowForm(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleWeightAdjust = async (id: number, delta: number) => {
@@ -67,6 +77,9 @@ export default function TraitManager() {
             className="group relative inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 py-1.5 pl-3.5 pr-1.5 text-xs font-bold leading-5 text-emerald-700"
           >
             {trait.name}
+            {trait.description && (
+              <span className="ml-1 text-[10px] text-emerald-500/70">— {trait.description.slice(0, 24)}{trait.description.length > 24 ? '…' : ''}</span>
+            )}
             {editingWeight === trait.id ? (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-white/70 px-1">
                 <button
@@ -132,10 +145,18 @@ export default function TraitManager() {
               className="min-w-0 flex-1"
             />
             <div className="flex gap-2">
-              <Button onClick={handleAdd} size="sm">保存</Button>
-              <Button onClick={() => setShowForm(false)} variant="ghost" size="sm">取消</Button>
+              <Button onClick={handleAdd} size="sm" disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+              <Button onClick={() => setShowForm(false)} variant="ghost" size="sm" disabled={saving}>取消</Button>
             </div>
           </div>
+          <textarea
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Ta 是怎样的？温柔、好奇、固执……（可留空，特质会自然演化）"
+            className="w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-xs text-brand-700 placeholder:text-brand-300 focus:border-emerald-400 focus:outline-none"
+            rows={2}
+            disabled={saving}
+          />
           <div className="flex items-center gap-3 px-1">
             <label htmlFor="trait-weight" className="text-[11px] font-bold text-brand-500 shrink-0">重要程度</label>
             <input
@@ -150,6 +171,7 @@ export default function TraitManager() {
             />
             <span className="w-5 text-center text-xs font-black tabular-nums text-brand-700">{weight}</span>
           </div>
+          <p className="mt-1 text-[10px] text-brand-400">💡 这只是起点——Ta 可能会自然演化成与设想不同的样子，这并非坏事。</p>
         </div>
       ) : (
         <Button onClick={() => setShowForm(true)} variant="secondary" fullWidth className="border-dashed">＋ 添加新特质</Button>
