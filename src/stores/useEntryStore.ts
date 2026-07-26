@@ -45,6 +45,7 @@ export const useEntryStore = create<EntryState>((set) => ({
       set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }));
     } catch (error) {
       console.error(error);
+      throw error;
     } finally {
       set({ loading: false });
     }

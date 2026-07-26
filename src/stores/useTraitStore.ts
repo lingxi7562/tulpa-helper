@@ -45,6 +45,7 @@ export const useTraitStore = create<TraitState>((set) => ({
       set({ traits: rows });
     } catch (error) {
       console.error(error);
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -57,6 +58,7 @@ export const useTraitStore = create<TraitState>((set) => ({
       set({ traits: rows });
     } catch (error) {
       console.error(error);
+      throw error;
     } finally {
       set({ loading: false });
     }

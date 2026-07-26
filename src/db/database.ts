@@ -76,9 +76,12 @@ export async function deleteTrait(id: number) {
 }
 
 export async function updateTrait(id: number, fields: { name?: string; description?: string; weight?: number; category?: string }) {
+  if (fields.weight !== undefined && (!Number.isInteger(fields.weight) || fields.weight < 1 || fields.weight > 10)) {
+    throw new RangeError('Trait weight must be an integer from 1 to 10');
+  }
   const d = await getDb();
   const sets: string[] = [];
-  const values: any[] = [];
+  const values: (string | number)[] = [];
   if (fields.name !== undefined) { sets.push('name = $' + (values.length + 1)); values.push(fields.name); }
   if (fields.description !== undefined) { sets.push('description = $' + (values.length + 1)); values.push(fields.description); }
   if (fields.weight !== undefined) { sets.push('weight = $' + (values.length + 1)); values.push(fields.weight); }
@@ -86,6 +89,48 @@ export async function updateTrait(id: number, fields: { name?: string; descripti
   if (!sets.length) return;
   values.push(id);
   await d.execute(`UPDATE traits SET ${sets.join(', ')} WHERE id = $${values.length}`, values);
+}
+
+// === 事务性对话创建（entry + messages 原子写入） ===
+export async function createDialogueEntry(params: {
+  stage_id: string;
+  text: string;
+  messages: { speaker: Speaker; content: string }[];
+}) {
+  const d = await getDb();
+  await d.execute('BEGIN');
+  try {
+    const result = await d.execute(
+      `INSERT INTO entries (stage_id, type, title, content, tags, duration_seconds, mood)
+       VALUES ($1, 'dialogue', $2, $3, '[]', 0, NULL)`,
+      [params.stage_id, params.text.slice(0, 50), params.text]
+    );
+    const entryId = result.lastInsertId as number;
+    for (let i = 0; i < params.messages.length; i++) {
+      const msg = params.messages[i];
+      await d.execute(
+        'INSERT INTO dialogue_messages (entry_id, speaker, content, seq) VALUES ($1, $2, $3, $4)',
+        [entryId, msg.speaker, msg.content, i]
+      );
+    }
+    await d.execute('COMMIT');
+    return entryId;
+  } catch (e) {
+    try { await d.execute('ROLLBACK'); } catch { /* rollback failure should not mask original error */ }
+    throw e;
+  }
+}
+
+// === 承诺确认检测（不限条目数） ===
+export async function hasCommitmentConfirmation(): Promise<boolean> {
+  const d = await getDb();
+  const rows: any[] = await d.select(
+    `SELECT EXISTS(
+       SELECT 1 FROM entries
+       WHERE stage_id = 'prep' AND type = 'devotion' AND title = 'Commitment Confirmation'
+     ) AS found`
+  );
+  return rows[0]?.found === 1;
 }
 
 // === CRUD：dialogue_messages ===
