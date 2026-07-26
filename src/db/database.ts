@@ -37,6 +37,11 @@ export async function getEntries(stageId?: string, limit = 50, offset = 0): Prom
   return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`, params);
 }
 
+export async function getWonderlandEntries(): Promise<Entry[]> {
+  const d = await getDb();
+  return d.select("SELECT * FROM entries WHERE type = 'wonderland' ORDER BY created_at DESC, id DESC");
+}
+
 export async function createEntry(entry: {
   stage_id: string; type: EntryType; title: string; content?: string;
   tags?: string; duration_seconds?: number; mood?: number;
@@ -151,6 +156,21 @@ export async function createDialogueMessage(msg: { entry_id: number; speaker: Sp
 export async function getFormDetails() {
   const d = await getDb();
   return d.select('SELECT * FROM form_details ORDER BY id');
+}
+
+export async function createFormDetail(sense_type: string, description: string) {
+  const d = await getDb();
+  await d.execute('INSERT INTO form_details (sense_type, description) VALUES ($1, $2)', [sense_type, description]);
+}
+
+export async function updateFormDetail(id: number, description: string) {
+  const d = await getDb();
+  await d.execute('UPDATE form_details SET description = $1 WHERE id = $2', [description, id]);
+}
+
+export async function deleteFormDetail(id: number) {
+  const d = await getDb();
+  await d.execute('DELETE FROM form_details WHERE id = $1', [id]);
 }
 
 // === CRUD：milestones ===

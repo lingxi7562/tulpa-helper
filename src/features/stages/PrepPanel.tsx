@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import FocusTimer from '../forcing/FocusTimer';
 import TraitManager from '../traits/TraitManager';
+import FormBuilder from '../form/FormBuilder';
+import WonderlandEditor from '../wonderland/WonderlandEditor';
 import { useTraitStore } from '../../stores/useTraitStore';
 import { STAGES } from '../../constants/stages';
 import Card from '../../components/ui/Card';
@@ -20,7 +22,8 @@ export default function PrepPanel() {
       </Card>
       <FocusTimer sessionTypes={PREP_SESSION_TYPES} />
       <TraitManager />
-      <div className="grid gap-4 sm:grid-cols-2">{[{ icon: '🎨', title: '形态设计', copy: '慢慢勾勒熟悉的轮廓与细节' }, { icon: '🏡', title: 'Wonderland', copy: '为你们构建一处安心相见的地方' }].map(item => <Card key={item.title}><span className="mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-brand-100 text-xl">{item.icon}</span><h3 className="font-black text-brand-900">{item.title}</h3><p className="mt-1 text-xs leading-6 text-brand-400">{item.copy} · 即将开放</p></Card>)}</div>
+      <FormBuilder />
+      <WonderlandEditor />
       <CommitmentConfirm />
     </div>
   );
