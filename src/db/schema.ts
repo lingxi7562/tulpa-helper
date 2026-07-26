@@ -59,6 +59,11 @@ export interface Milestone {
   notes: string;
 }
 
+export interface ImpositionLevel {
+  sense_type: SenseType;
+  level: number;
+}
+
 // === SQL 建表 + 初始数据 ===
 export const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS stages (
@@ -110,5 +115,9 @@ export const MIGRATIONS = [
     title TEXT NOT NULL,
     achieved_at TEXT,
     notes TEXT DEFAULT ''
+  )`,
+  `CREATE TABLE IF NOT EXISTS imposition_levels (
+    sense_type TEXT PRIMARY KEY CHECK(sense_type IN ('visual','audio','smell','touch','taste')),
+    level INTEGER NOT NULL DEFAULT 1 CHECK(level BETWEEN 1 AND 10)
   )`,
 ];

@@ -1,5 +1,5 @@
 import Database from '@tauri-apps/plugin-sql';
-import { MIGRATIONS, type Entry, type EntryType, type Speaker, type Stage, type Trait } from './schema';
+import { MIGRATIONS, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
 
 let db: Database | null = null;
 
@@ -187,6 +187,30 @@ export async function updateFormDetail(id: number, description: string) {
 export async function deleteFormDetail(id: number) {
   const d = await getDb();
   await d.execute('DELETE FROM form_details WHERE id = $1', [id]);
+}
+
+// === CRUD：imposition_levels ===
+export async function getImpositionLevels(): Promise<ImpositionLevel[]> {
+  const d = await getDb();
+  return d.select('SELECT * FROM imposition_levels ORDER BY sense_type');
+}
+
+export async function setImpositionLevel(sense_type: string, level: number) {
+  if (!Number.isInteger(level) || level < 1 || level > 10) throw new RangeError('Level must be 1-10');
+  const d = await getDb();
+  await d.execute(
+    'INSERT INTO imposition_levels (sense_type, level) VALUES ($1, $2) ON CONFLICT(sense_type) DO UPDATE SET level = excluded.level',
+    [sense_type, level]
+  );
+}
+
+// === 按类型查询 entries（避免 fetch-50-then-filter） ===
+export async function getEntriesByType(stageId: string, type: string, limit = 100): Promise<Entry[]> {
+  const d = await getDb();
+  return d.select(
+    'SELECT * FROM entries WHERE stage_id = $1 AND type = $2 ORDER BY created_at DESC, id DESC LIMIT $3',
+    [stageId, type, limit]
+  );
 }
 
 // === CRUD：milestones ===
