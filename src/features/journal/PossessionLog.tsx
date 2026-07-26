@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useStageStore } from '../../stores/useStageStore';
-import { getEntriesByType } from '../../db/database';
+import { getEntriesByTag } from '../../db/database';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -22,12 +22,8 @@ export default function PossessionLog({ onSaved }: Props) {
 
   const load = useCallback(async () => {
     try {
-      const rows = await getEntriesByType(activeStageId, 'practice');
-      // 只显示带 possession 标记的 practice 条目
-      setLogs(rows.filter(e => {
-        try { const tags = JSON.parse(e.tags || '[]'); return Array.isArray(tags) && tags.includes('possession'); }
-        catch { return false; }
-      }));
+      const rows = await getEntriesByTag(activeStageId, 'practice', 'possession');
+      setLogs(rows);
     } catch (error) { console.error(error); }
   }, [activeStageId]);
 
@@ -86,6 +82,9 @@ export default function PossessionLog({ onSaved }: Props) {
         </div>
         <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="练习部位与进展…" disabled={saving} className="min-h-16" />
         <Button size="sm" onClick={handleSave} disabled={!notes.trim() || saving}>{saving ? '保存中…' : '记录'}</Button>
+        <p className="mt-2 text-[10px] leading-relaxed text-amber-600">
+          ⚠ 若出现持续不真实感、失控感或日常功能受影响，请暂停练习并寻求专业帮助。
+        </p>
       </div>
     </Card>
   );

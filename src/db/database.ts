@@ -60,6 +60,14 @@ export async function getAutonomyEntries(stageId?: string): Promise<Entry[]> {
   return d.select("SELECT * FROM entries WHERE type = 'autonomy' ORDER BY created_at DESC, id DESC");
 }
 
+export async function getEntriesByTag(stageId: string, type: string, tag: string): Promise<Entry[]> {
+  const d = await getDb();
+  return d.select(
+    `SELECT * FROM entries WHERE stage_id = $1 AND type = $2 AND tags LIKE $3 ORDER BY created_at DESC, id DESC`,
+    [stageId, type, `%${tag}%`]
+  );
+}
+
 export async function getResonanceEntries(days: number = 14): Promise<Entry[]> {
   const d = await getDb();
   return d.select(

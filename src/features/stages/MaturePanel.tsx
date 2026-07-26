@@ -8,14 +8,24 @@ import { STAGES } from '../../constants/stages';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Heatmap from '../../components/ui/Heatmap';
+import { useFormStore } from '../../stores/useFormStore';
 
 const SENSES = [
-  { type: 'visual', label: '视觉', icon: '👁' },
-  { type: 'audio', label: '听觉', icon: '👂' },
-  { type: 'smell', label: '嗅觉', icon: '👃' },
-  { type: 'touch', label: '触觉', icon: '✋' },
-  { type: 'taste', label: '味觉', icon: '👅' },
+  { type: 'visual', label: '视觉', icon: '👁', priority: 'primary' as const },
+  { type: 'audio', label: '听觉', icon: '👂', priority: 'primary' as const },
+  { type: 'touch', label: '触觉', icon: '✋', priority: 'primary' as const },
+  { type: 'smell', label: '嗅觉', icon: '👃', priority: 'secondary' as const },
+  { type: 'taste', label: '味觉', icon: '👅', priority: 'secondary' as const },
 ] as const;
+
+const IMPOSITION_STAGES = [
+  { level: 1, name: '存在感', desc: '能感知 Ta 在身旁' },
+  { level: 2, name: '闪现', desc: '偶尔捕捉到模糊轮廓' },
+  { level: 3, name: '稳定', desc: '持续可见的清晰形态' },
+  { level: 4, name: '不透明', desc: '无法看穿，完全清晰' },
+] as const;
+
+const MAX_LEVEL = 4;
 
 function formatDuration(seconds: number) {
   const hours = Math.floor(seconds / 3600);
@@ -28,11 +38,13 @@ export default function MaturePanel() {
   const [editingSense, setEditingSense] = useState<string | null>(null);
   const [savingSense, setSavingSense] = useState<string | null>(null);
   const { heatmapData, stageBreakdown, totalSeconds, refresh } = useStats();
+  const { formDetails, loadFormDetails } = useFormStore();
 
   const loadLevels = useCallback(async () => {
     try { setLevels(await getImpositionLevels()); } catch (e) { console.error(e); }
   }, []);
   useEffect(() => { loadLevels(); }, [loadLevels]);
+  useEffect(() => { loadFormDetails(); }, [loadFormDetails]);
 
   const handleLevel = async (sense: string, level: number) => {
     if (savingSense !== null) return;
@@ -83,31 +95,59 @@ export default function MaturePanel() {
             const editing = editingSense === sense.type;
             const isSaving = savingSense === sense.type;
             return (
-              <div key={sense.type} className="rounded-2xl border border-purple-100 bg-purple-50/50 p-4 text-center">
+              <div
+                key={sense.type}
+                className={`rounded-2xl border p-4 text-center ${
+                  sense.priority === 'secondary'
+                    ? 'border-purple-50 bg-purple-50/30 opacity-75'
+                    : 'border-purple-100 bg-purple-50/50'
+                }`}
+              >
                 <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-xl bg-white text-lg shadow-sm">{sense.icon}</span>
                 <p className="text-xs font-black text-brand-700">{sense.label}</p>
                 {editing ? (
-                  <div className="mt-2 flex items-center justify-center gap-1.5">
-                    <button
-                      onClick={() => handleLevel(sense.type, Math.max(1, lv - 1))}
-                      disabled={isSaving || lv <= 1}
-                      className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
-                      aria-label="减少等级"
-                    >−</button>
-                    <span className="text-sm font-black text-purple-700 tabular-nums w-6">{isSaving ? '…' : lv}</span>
-                    <button
-                      onClick={() => handleLevel(sense.type, Math.min(10, lv + 1))}
-                      disabled={isSaving || lv >= 10}
-                      className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
-                      aria-label="增加等级"
-                    >+</button>
+                  <div className="mt-2">
+                    {(() => {
+                      const formForSense = formDetails.filter(d => d.sense_type === sense.type);
+                      return formForSense.length > 0 ? (
+                        <div className="mb-2 mt-1 max-h-16 overflow-y-auto rounded-lg bg-white/70 p-1.5 text-left">
+                          {formForSense.slice(0, 2).map(d => (
+                            <p key={d.id} className="text-[10px] leading-relaxed text-brand-500">&quot;{d.description.slice(0, 40)}{d.description.length > 40 ? '…' : ''}&quot;</p>
+                          ))}
+                          {formForSense.length > 2 && <p className="text-[9px] text-brand-400">+{formForSense.length - 2} 条</p>}
+                        </div>
+                      ) : (
+                        <p className="mb-2 mt-1 text-[9px] text-brand-400">准备期未记录{sense.label}描述</p>
+                      );
+                    })()}
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        onClick={() => handleLevel(sense.type, Math.max(1, lv - 1))}
+                        disabled={isSaving || lv <= 1}
+                        className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
+                        aria-label="减少等级"
+                      >−</button>
+                      <span className="min-w-[2em] text-center text-xs font-black text-purple-700 tabular-nums">
+                        {isSaving ? '…' : (IMPOSITION_STAGES[lv - 1]?.name || lv)}
+                      </span>
+                      <button
+                        onClick={() => handleLevel(sense.type, Math.min(MAX_LEVEL, lv + 1))}
+                        disabled={isSaving || lv >= MAX_LEVEL}
+                        className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
+                        aria-label="增加等级"
+                      >+</button>
+                    </div>
+                    <p className="mt-1 text-[9px] text-purple-400">{IMPOSITION_STAGES[lv - 1]?.desc}</p>
                   </div>
                 ) : (
                   <button
                     onClick={() => toggleEdit(sense.type)}
                     disabled={savingSense !== null}
                     className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
-                  >LEVEL {String(lv).padStart(2, '0')}</button>
+                  >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
+                )}
+                {sense.priority === 'secondary' && (
+                  <span className="mt-1 block text-[9px] text-purple-300">进阶</span>
                 )}
               </div>
             );

@@ -77,6 +77,9 @@ export default function SwitchingLog({ onSaved }: Props) {
         </div>
         <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="练习感受…" disabled={saving} className="min-h-16" />
         <Button size="sm" onClick={handleSave} disabled={!durationValid || saving}>{saving ? '保存中…' : '记录'}</Button>
+        <p className="mt-2 text-[10px] leading-relaxed text-amber-600">
+          ⚠ 若出现持续不真实感、失控感或日常功能受影响，请暂停练习并寻求专业帮助。
+        </p>
       </div>
     </Card>
   );
