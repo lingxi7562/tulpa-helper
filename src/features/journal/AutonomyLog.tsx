@@ -17,12 +17,12 @@ export default function AutonomyLog() {
 
   const loadLogs = useCallback(async () => {
     try {
-      const rows = await getAutonomyEntries();
+      const rows = await getAutonomyEntries(activeStageId);
       setLogs(rows);
     } catch (error) {
       console.error(error);
     }
-  }, []);
+  }, [activeStageId]);
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 

@@ -57,7 +57,9 @@ export default function ResonanceTracker() {
   const byDate = new Map<string, Entry>();
   for (const e of entries) {
     const key = e.created_at?.slice(0, 10) ?? '';
-    byDate.set(key, e); // entries 已按 DESC 排序，后写入的更早，保留第一条（最新）
+    if (!byDate.has(key)) {
+      byDate.set(key, e); // entries 已按 DESC 排序，只保留第一条（最新）
+    }
   }
   const distinctDays = byDate.size;
 

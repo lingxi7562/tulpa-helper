@@ -52,8 +52,11 @@ export async function getWonderlandEntries(stageId?: string): Promise<Entry[]> {
   return d.select("SELECT * FROM entries WHERE type = 'wonderland' ORDER BY created_at DESC, id DESC");
 }
 
-export async function getAutonomyEntries(): Promise<Entry[]> {
+export async function getAutonomyEntries(stageId?: string): Promise<Entry[]> {
   const d = await getDb();
+  if (stageId) {
+    return d.select("SELECT * FROM entries WHERE type = 'autonomy' AND stage_id = $1 ORDER BY created_at DESC, id DESC", [stageId]);
+  }
   return d.select("SELECT * FROM entries WHERE type = 'autonomy' ORDER BY created_at DESC, id DESC");
 }
 
