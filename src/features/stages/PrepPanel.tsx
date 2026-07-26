@@ -5,6 +5,7 @@ import { useTraitStore } from '../../stores/useTraitStore';
 import { STAGES } from '../../constants/stages';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import CommitmentConfirm from '../journal/CommitmentConfirm';
 
 const PREP_SESSION_TYPES = [{ label: '蓝图设计', value: 'design' }];
 
@@ -20,6 +21,7 @@ export default function PrepPanel() {
       <FocusTimer sessionTypes={PREP_SESSION_TYPES} />
       <TraitManager />
       <div className="grid gap-4 sm:grid-cols-2">{[{ icon: '🎨', title: '形态设计', copy: '慢慢勾勒熟悉的轮廓与细节' }, { icon: '🏡', title: 'Wonderland', copy: '为你们构建一处安心相见的地方' }].map(item => <Card key={item.title}><span className="mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-brand-100 text-xl">{item.icon}</span><h3 className="font-black text-brand-900">{item.title}</h3><p className="mt-1 text-xs leading-6 text-brand-400">{item.copy} · 即将开放</p></Card>)}</div>
+      <CommitmentConfirm />
     </div>
   );
 }

@@ -75,6 +75,19 @@ export async function deleteTrait(id: number) {
   await d.execute('DELETE FROM traits WHERE id = $1', [id]);
 }
 
+export async function updateTrait(id: number, fields: { name?: string; description?: string; weight?: number; category?: string }) {
+  const d = await getDb();
+  const sets: string[] = [];
+  const values: any[] = [];
+  if (fields.name !== undefined) { sets.push('name = $' + (values.length + 1)); values.push(fields.name); }
+  if (fields.description !== undefined) { sets.push('description = $' + (values.length + 1)); values.push(fields.description); }
+  if (fields.weight !== undefined) { sets.push('weight = $' + (values.length + 1)); values.push(fields.weight); }
+  if (fields.category !== undefined) { sets.push('category = $' + (values.length + 1)); values.push(fields.category); }
+  if (!sets.length) return;
+  values.push(id);
+  await d.execute(`UPDATE traits SET ${sets.join(', ')} WHERE id = $${values.length}`, values);
+}
+
 // === CRUD：dialogue_messages ===
 export async function getDialogueMessages(entryId: number) {
   const d = await getDb();
