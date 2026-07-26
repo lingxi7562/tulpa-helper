@@ -7,7 +7,11 @@ import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
 import type { Entry } from '../../db/schema';
 
-export default function WonderlandEditor() {
+interface Props {
+  stageId?: string;
+}
+
+export default function WonderlandEditor({ stageId = 'prep' }: Props) {
   const { addEntry } = useEntryStore();
   const [versions, setVersions] = useState<Entry[]>([]);
   const [currentVersion, setCurrentVersion] = useState<Entry | null>(null);
@@ -16,12 +20,12 @@ export default function WonderlandEditor() {
 
   const loadVersions = useCallback(async () => {
     try {
-      const rows = await getWonderlandEntries();
+      const rows = await getWonderlandEntries(stageId);
       setVersions(rows);
     } catch (error) {
       console.error(error);
     }
-  }, []);
+  }, [stageId]);
 
   useEffect(() => { loadVersions(); }, [loadVersions]);
 
@@ -31,7 +35,7 @@ export default function WonderlandEditor() {
     try {
       const content = draft.trim();
       await addEntry({
-        stage_id: 'prep',
+        stage_id: stageId,
         type: 'wonderland',
         title: content.slice(0, 50),
         content,

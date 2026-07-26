@@ -2,7 +2,8 @@
 export type EntryType =
   | 'trait' | 'form' | 'session' | 'narration' | 'devotion'
   | 'dialogue' | 'wonderland' | 'signal' | 'imposition' | 'switch'
-  | 'design' | 'dialogue_session' | 'practice';
+  | 'design' | 'dialogue_session' | 'practice'
+  | 'autonomy' | 'resonance';
 
 export type Speaker = 'self' | 'tulpa';
 export type SenseType = 'visual' | 'audio' | 'smell' | 'touch' | 'taste';

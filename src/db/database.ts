@@ -37,9 +37,25 @@ export async function getEntries(stageId?: string, limit = 50, offset = 0): Prom
   return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`, params);
 }
 
-export async function getWonderlandEntries(): Promise<Entry[]> {
+export async function getWonderlandEntries(stageId?: string): Promise<Entry[]> {
   const d = await getDb();
+  if (stageId) {
+    return d.select("SELECT * FROM entries WHERE type = 'wonderland' AND stage_id = $1 ORDER BY created_at DESC, id DESC", [stageId]);
+  }
   return d.select("SELECT * FROM entries WHERE type = 'wonderland' ORDER BY created_at DESC, id DESC");
+}
+
+export async function getAutonomyEntries(): Promise<Entry[]> {
+  const d = await getDb();
+  return d.select("SELECT * FROM entries WHERE type = 'autonomy' ORDER BY created_at DESC, id DESC");
+}
+
+export async function getResonanceEntries(days: number = 14): Promise<Entry[]> {
+  const d = await getDb();
+  return d.select(
+    `SELECT * FROM entries WHERE type = 'resonance' AND created_at >= date('now','localtime','-' || ($1 - 1) || ' days') ORDER BY created_at DESC, id DESC`,
+    [days]
+  );
 }
 
 export async function createEntry(entry: {

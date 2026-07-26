@@ -23,7 +23,7 @@ export default function PrepPanel() {
       <FocusTimer sessionTypes={PREP_SESSION_TYPES} />
       <TraitManager />
       <FormBuilder />
-      <WonderlandEditor />
+      <WonderlandEditor stageId="prep" />
       <CommitmentConfirm />
     </div>
   );
