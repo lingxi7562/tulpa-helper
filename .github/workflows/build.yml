@@ -22,6 +22,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri/target
+
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli
 
@@ -62,6 +67,11 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri/target
 
       - name: Install Tauri CLI
         run: npm install -g @tauri-apps/cli
@@ -122,6 +132,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri/target
 
       - name: Init Android project
         run: npx tauri android init --ci

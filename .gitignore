@@ -7,10 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Build artifacts
 node_modules
 dist
 dist-ssr
 *.local
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
 
 # Editor directories and files
 .vscode/*

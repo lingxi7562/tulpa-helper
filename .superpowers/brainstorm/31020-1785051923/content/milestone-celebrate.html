@@ -1,0 +1,48 @@
+<h2>里程碑庆祝动画 — 方案对比</h2>
+<p class="subtitle">累计 10 / 50 / 100 小时触发，实时检测（番茄钟完成后）</p>
+
+<h3>动画风格</h3>
+
+<div class="section">
+  <div class="cards">
+    <div class="card" data-choice="css-only" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>A：纯 CSS 粒子</h3>
+        <p>用 30-40 个绝对定位的彩色圆点，keyframes 随机方向飘落 + 旋转 + 淡出。零依赖，约 60 行 CSS。</p>
+        <p style="margin-top:8px;font-size:13px;color:var(--ui-muted)">
+          效果：简洁、克制，与温暖品牌调性一致。类似 SimpleConfetti。
+        </p>
+        <div class="placeholder" style="margin-top:12px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a,#fbbf24);border-radius:12px;text-align:center">
+          <div style="font-size:32px;margin-bottom:4px">🎉</div>
+          <div style="font-weight:600;font-size:15px">你已累计 10 小时！</div>
+          <div style="font-size:12px;color:#92400e;margin-top:2px">继续坚持，Tulpa 在成长 🌱</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-choice="canvas-confetti" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>B：canvas-confetti 库</h3>
+        <p>引入 <code>canvas-confetti</code> (~3KB gzip)，真实物理粒子效果（重力、旋转、拖尾），社区成熟方案。</p>
+        <p style="margin-top:8px;font-size:13px;color:var(--ui-muted)">
+          效果：更华丽的彩带/纸屑爆炸，类似 GitHub 成就、Vercel 部署成功。
+        </p>
+        <div class="placeholder" style="margin-top:12px;padding:24px;background:#1e1b4b;border-radius:12px;text-align:center;color:white">
+          <div style="font-size:28px;margin-bottom:4px">🎊</div>
+          <div style="font-weight:700;font-size:18px">50 Hours!</div>
+          <div style="font-size:12px;color:#a5b4fc;margin-top:4px">Halfway to mastery · Keep going</div>
+          <div style="margin-top:10px;display:flex;gap:4px;justify-content:center">
+            <div style="width:10px;height:10px;background:#f59e0b;border-radius:2px;transform:rotate(15deg)"></div>
+            <div style="width:10px;height:10px;background:#ec4899;border-radius:2px;transform:rotate(-10deg)"></div>
+            <div style="width:10px;height:10px;background:#8b5cf6;border-radius:2px;transform:rotate(25deg)"></div>
+            <div style="width:10px;height:10px;background:#10b981;border-radius:2px;transform:rotate(-20deg)"></div>
+            <div style="width:10px;height:10px;background:#3b82f6;border-radius:2px;transform:rotate(5deg)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>建议</h3>
+<p><strong>推荐方案 A（纯 CSS）</strong>——与项目的"温暖克制"品牌调性一致，零额外依赖，维护成本低。canvas-confetti 更适合需要"惊艳感"的产品首页，而 Tulpa Helper 是安静的日常伴侣工具。</p>

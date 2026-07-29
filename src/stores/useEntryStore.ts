@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { getEntries, createEntry, deleteEntry, updateEntry } from '../db/database';
+import { getEntries, getEntryCount, createEntry, deleteEntry, updateEntry } from '../db/database';
 import type { Entry, EntryType } from '../db/schema';
 
 interface EntryState {
   entries: Entry[];
+  totalEntries: number;
   loading: boolean;
   loadEntries: (stageId?: string, limit?: number, offset?: number, append?: boolean) => Promise<void>;
-  loadAllEntries: (stageId?: string) => Promise<void>;
   addEntry: (e: { stage_id: string; type: EntryType; title: string; content?: string; tags?: string; duration_seconds?: number; mood?: number }) => Promise<number>;
   removeEntry: (id: number) => Promise<void>;
   updateEntry: (id: number, fields: { title?: string; content?: string; mood?: number; tags?: string }) => Promise<void>;
@@ -14,23 +14,19 @@ interface EntryState {
 
 export const useEntryStore = create<EntryState>((set) => ({
   entries: [],
+  totalEntries: 0,
   loading: false,
   loadEntries: async (stageId, limit = 50, offset = 0, append = false) => {
     set({ loading: true });
     try {
-      const rows = await getEntries(stageId, limit, offset);
-      set((s) => ({ entries: append ? [...s.entries, ...rows] : rows }));
-    } catch (error) {
-      console.error(error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-  loadAllEntries: async (stageId) => {
-    set({ loading: true });
-    try {
-      const rows = await getEntries(stageId, 2000, 0);
-      set({ entries: rows });
+      const [rows, totalEntries] = await Promise.all([
+        getEntries(stageId, limit, offset),
+        getEntryCount(stageId),
+      ]);
+      set((s) => ({
+        entries: append ? [...s.entries, ...rows] : rows,
+        totalEntries,
+      }));
     } catch (error) {
       console.error(error);
     } finally {
@@ -41,8 +37,11 @@ export const useEntryStore = create<EntryState>((set) => ({
     set({ loading: true });
     try {
       const id = await createEntry(e);
-      const rows = await getEntries();
-      set({ entries: rows });
+      const [rows, totalEntries] = await Promise.all([
+        getEntries(),
+        getEntryCount(),
+      ]);
+      set({ entries: rows, totalEntries });
       return id;
     } catch (error) {
       console.error(error);
@@ -55,7 +54,10 @@ export const useEntryStore = create<EntryState>((set) => ({
     set({ loading: true });
     try {
       await deleteEntry(id);
-      set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }));
+      set((s) => ({
+        entries: s.entries.filter((e) => e.id !== id),
+        totalEntries: Math.max(0, s.totalEntries - 1),
+      }));
     } catch (error) {
       console.error(error);
       throw error;

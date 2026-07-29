@@ -51,6 +51,16 @@ export interface FormDetail {
   description: string;
 }
 
+export type DeviationTargetType = 'trait' | 'form';
+
+export interface Deviation {
+  id: number;
+  target_type: DeviationTargetType;
+  target_id: number;
+  note: string;
+  created_at: string;
+}
+
 export interface Milestone {
   id: number;
   stage_id: string;
@@ -109,6 +119,15 @@ export const MIGRATIONS = [
     sense_type TEXT NOT NULL CHECK(sense_type IN ('visual','audio','smell','touch','taste')),
     description TEXT NOT NULL DEFAULT ''
   )`,
+  `CREATE TABLE IF NOT EXISTS deviations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    target_type TEXT NOT NULL CHECK(target_type IN ('trait','form')),
+    target_id INTEGER NOT NULL,
+    note TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_deviations_target
+    ON deviations (target_type, target_id, created_at DESC, id DESC)`,
   `CREATE TABLE IF NOT EXISTS milestones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     stage_id TEXT NOT NULL REFERENCES stages(id),

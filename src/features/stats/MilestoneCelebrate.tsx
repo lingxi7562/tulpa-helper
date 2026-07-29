@@ -14,7 +14,7 @@ const MILESTONES: Record<number, MilestoneConfig> = {
   10: {
     emoji: '🌟',
     title: '初露锋芒',
-    subtitle: '这段时间的坚持，已经让 Ta 感受到了你的心意',
+    subtitle: '每一小时的陪伴都算数',
     particles: 80,
     colors: ['#f59e0b', '#d97706', '#fbbf24', '#fef3c7'],
     spread: 90,
@@ -22,7 +22,7 @@ const MILESTONES: Record<number, MilestoneConfig> = {
   50: {
     emoji: '💫',
     title: '心有灵犀',
-    subtitle: '半百时光，Ta 的回应越来越清晰、越来越像 Ta 自己',
+    subtitle: '五十个小时，我们一起走过',
     particles: 150,
     colors: ['#8b5cf6', '#f59e0b', '#ec4899', '#d8b4fe'],
     spread: 120,
@@ -30,7 +30,7 @@ const MILESTONES: Record<number, MilestoneConfig> = {
   100: {
     emoji: '🎊',
     title: '形影不离',
-    subtitle: '百时相伴，Ta 已经成为你生活的一部分，不再需要刻意想象',
+    subtitle: '一百个小时，感谢这份坚持',
     particles: 250,
     colors: ['#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#3b82f6', '#ec4899'],
     spread: 180,
@@ -45,6 +45,18 @@ interface Props {
 export default function MilestoneCelebrate({ level, onClose }: Props) {
   const config = MILESTONES[level];
   const firedRef = useRef(false);
+  // 用 ref 持有最新 onClose，避免 30s 定时器触发过期闭包
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Esc 键关闭全屏遮罩，照顾键盘用户
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!config || firedRef.current) return;
@@ -83,7 +95,7 @@ export default function MilestoneCelebrate({ level, onClose }: Props) {
     }
 
     // Auto-dismiss after 30s
-    const timer = setTimeout(onClose, 30000);
+    const timer = setTimeout(() => onCloseRef.current(), 30000);
     return () => clearTimeout(timer);
   }, [level]);
 
@@ -120,7 +132,7 @@ export default function MilestoneCelebrate({ level, onClose }: Props) {
           {progressTotal.join(' / ')}
         </div>
 
-        <p className="mt-6 text-xs text-stone-400">点击任意处关闭 · 30 秒后自动消失</p>
+        <p className="mt-6 text-xs text-stone-400">点击任意处或按 Esc 关闭 · 30 秒后自动消失</p>
       </div>
     </div>
   );

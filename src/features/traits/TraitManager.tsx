@@ -5,6 +5,27 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Badge from '../../components/ui/Badge';
 import IconButton from '../../components/ui/IconButton';
+import EvolutionLog from '../evolution/EvolutionLog';
+
+const TIER_MAP: Record<number, { label: string; color: string; activeColor: string }> = {
+  8: { label: '核心', color: 'text-amber-500', activeColor: 'border-amber-500 bg-amber-500 text-white' },
+  5: { label: '重要', color: 'text-blue-500', activeColor: 'border-blue-500 bg-blue-500 text-white' },
+  2: { label: '一般', color: 'text-gray-400', activeColor: 'border-gray-400 bg-gray-400 text-white' },
+};
+
+const WEIGHT_TIERS = [8, 5, 2] as const;
+
+function weightToTier(weight: number) {
+  if (weight >= 7) return TIER_MAP[8];
+  if (weight >= 4) return TIER_MAP[5];
+  return TIER_MAP[2];
+}
+
+function nextTierWeight(weight: number) {
+  if (weight >= 7) return 5;
+  if (weight >= 4) return 2;
+  return 8;
+}
 
 export default function TraitManager() {
   const { traits, addTrait, removeTrait, updateTrait } = useTraitStore();
@@ -33,18 +54,17 @@ export default function TraitManager() {
     }
   };
 
-  const handleWeightAdjust = async (id: number, delta: number) => {
+  const handleTierCycle = async (id: number) => {
     const trait = traits.find(t => t.id === id);
     if (!trait || updatingId !== null) return;
-    const newWeight = Math.min(10, Math.max(1, trait.weight + delta));
-    if (newWeight === trait.weight) return;
     setUpdatingId(id);
     try {
-      await updateTrait(id, { weight: newWeight });
+      await updateTrait(id, { weight: nextTierWeight(trait.weight) });
     } catch (error) {
       console.error(error);
     } finally {
       setUpdatingId(null);
+      setEditingWeight(null);
     }
   };
 
@@ -70,63 +90,42 @@ export default function TraitManager() {
         <Badge variant="prep">{traits.length} 项</Badge>
       </div>
 
-      <div className="mb-5 flex min-h-9 flex-wrap gap-2">
+      <div className="mb-5 space-y-2">
         {traits.length ? traits.map(trait => (
-          <div
-            key={trait.id}
-            className="group relative inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 py-1.5 pl-3.5 pr-1.5 text-xs font-bold leading-5 text-emerald-700"
-          >
-            {trait.name}
-            {trait.description && (
-              <span className="ml-1 text-[10px] text-emerald-500/70">— {trait.description.slice(0, 24)}{trait.description.length > 24 ? '…' : ''}</span>
-            )}
-            {editingWeight === trait.id ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-white/70 px-1">
+          <div key={trait.id} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+            <div className="group flex flex-wrap items-center gap-1.5 text-xs font-bold leading-5 text-emerald-700">
+              <span>{trait.name}</span>
+              {trait.description && <span className="text-[10px] font-medium text-emerald-600/70">— {trait.description}</span>}
+              {editingWeight === trait.id ? (
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleWeightAdjust(trait.id, -1); }}
-                  disabled={updatingId === trait.id || trait.weight <= 1}
-                  className="grid h-7 w-7 place-items-center rounded-full text-sm text-emerald-600 hover:bg-emerald-100 disabled:opacity-30"
-                  aria-label="减少权重"
-                >−</button>
-                <span className="min-w-[1.2em] text-center text-xs tabular-nums">{trait.weight}</span>
+                  onClick={() => handleTierCycle(trait.id)}
+                  disabled={updatingId === trait.id}
+                  className={`rounded-full bg-white/70 px-2 py-1 text-[10px] ${weightToTier(trait.weight).color} disabled:opacity-50`}
+                  title="点击切换重要程度"
+                >
+                  {updatingId === trait.id ? '更新中…' : weightToTier(trait.weight).label}
+                </button>
+              ) : (
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleWeightAdjust(trait.id, +1); }}
-                  disabled={updatingId === trait.id || trait.weight >= 10}
-                  className="grid h-7 w-7 place-items-center rounded-full text-sm text-emerald-600 hover:bg-emerald-100 disabled:opacity-30"
-                  aria-label="增加权重"
-                >+</button>
+                  onClick={() => setEditingWeight(trait.id)}
+                  className={`rounded-full bg-white/60 px-1.5 text-[10px] ${weightToTier(trait.weight).color}`}
+                  title="点击调整重要程度"
+                >
+                  · {weightToTier(trait.weight).label}
+                </button>
+              )}
+              <span className="ml-auto">
+                {deletingId === trait.id ? (
+                  <span className="inline-flex items-center gap-1">
+                    <button onClick={() => handleDelete(trait.id)} className="rounded-full bg-red-600 px-2 py-1 text-[10px] text-white">确认</button>
+                    <button onClick={() => setDeletingId(null)} className="rounded-full bg-white px-2 py-1 text-[10px] text-brand-600">取消</button>
+                  </span>
+                ) : (
+                  <IconButton label={`删除${trait.name}`} icon="×" size="sm" variant="danger" onClick={() => { setDeletingId(trait.id); setEditingWeight(null); }} className="!h-7 !w-7 !text-xs opacity-50 group-hover:opacity-100" />
+                )}
               </span>
-            ) : (
-              <button
-                onClick={(e) => { e.stopPropagation(); setEditingWeight(trait.id); }}
-                className="ml-0.5 rounded-full bg-white/60 px-1.5 text-[10px] tabular-nums leading-5 text-emerald-600 hover:bg-white"
-                title="点击调整权重"
-              >
-                · {trait.weight}
-              </button>
-            )}
-            {deletingId === trait.id ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1.5 py-0.5">
-                <span className="text-[10px] font-bold text-red-600">删除？</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(trait.id); }}
-                  className="grid h-7 min-w-7 place-items-center rounded-full bg-red-600 px-2 text-[10px] font-bold text-white"
-                >确认</button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setDeletingId(null); }}
-                  className="grid h-7 min-w-7 place-items-center rounded-full bg-white px-2 text-[10px] font-bold text-brand-600"
-                >取消</button>
-              </span>
-            ) : (
-              <IconButton
-                label={`删除${trait.name}`}
-                icon="×"
-                size="sm"
-                variant="danger"
-                onClick={() => { setDeletingId(trait.id); setEditingWeight(null); }}
-                className="!h-7 !w-7 !text-xs opacity-40 group-hover:opacity-100"
-              />
-            )}
+            </div>
+            <EvolutionLog targetType="trait" targetId={trait.id} />
           </div>
         )) : (
           <p className="text-xs text-brand-400">还没有特质，从一个最重要的词开始。</p>
@@ -158,18 +157,25 @@ export default function TraitManager() {
             disabled={saving}
           />
           <div className="flex items-center gap-3 px-1">
-            <label htmlFor="trait-weight" className="text-[11px] font-bold text-brand-500 shrink-0">重要程度</label>
-            <input
-              id="trait-weight"
-              type="range"
-              min={1}
-              max={10}
-              step={1}
-              value={weight}
-              onChange={e => setWeight(Number(e.target.value))}
-              className="h-1.5 flex-1 appearance-none rounded-full bg-brand-200 accent-emerald-600 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:ring-2 [&::-webkit-slider-thumb]:ring-emerald-500"
-            />
-            <span className="w-5 text-center text-xs font-black tabular-nums text-brand-700">{weight}</span>
+            <span className="shrink-0 text-[11px] font-bold text-brand-500">重要程度</span>
+            <div className="flex flex-1 gap-1.5" role="group" aria-label="重要程度">
+              {WEIGHT_TIERS.map(tierWeight => {
+                const tier = TIER_MAP[tierWeight];
+                const selected = weight === tierWeight;
+                return (
+                  <button
+                    key={tierWeight}
+                    type="button"
+                    onClick={() => setWeight(tierWeight)}
+                    disabled={saving}
+                    aria-pressed={selected}
+                    className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors disabled:opacity-50 ${selected ? tier.activeColor : `border-current bg-transparent ${tier.color}`}`}
+                  >
+                    {tier.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <p className="mt-1 text-[10px] text-brand-400">💡 这只是起点——Ta 可能会自然演化成与设想不同的样子，这并非坏事。</p>
         </div>

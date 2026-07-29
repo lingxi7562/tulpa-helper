@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getWonderlandEntries } from '../../db/database';
+import { getWonderlandEntries, deleteEntry } from '../../db/database';
 import { useEntryStore } from '../../stores/useEntryStore';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -34,6 +34,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
   const [currentVersion, setCurrentVersion] = useState<Entry | null>(null);
   const [draft, setDraft] = useState(() => loadDraft(stageId));
   const [saving, setSaving] = useState(false);
+  const [lastSavedContent, setLastSavedContent] = useState(() => loadDraft(stageId));
 
   const loadVersions = useCallback(async () => {
     try {
@@ -52,6 +53,37 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
     return () => clearTimeout(timer);
   }, [draft, stageId]);
 
+  // 离开页面时若有未保存草稿，提示用户
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (draft.trim() && draft !== lastSavedContent) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [draft, lastSavedContent]);
+
+  const handleDeleteVersion = async (id: number) => {
+    if (saving) return;
+    if (!window.confirm('确定删除此版本？此操作不可撤销。')) return;
+    setSaving(true);
+    try {
+      await deleteEntry(id);
+      if (currentVersion?.id === id) {
+        setCurrentVersion(null);
+        setDraft('');
+        clearDraft(stageId);
+      }
+      await loadVersions();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!draft.trim() || saving) return;
     setSaving(true);
@@ -65,6 +97,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
       });
       setDraft('');
       clearDraft(stageId);
+      setLastSavedContent('');
       setCurrentVersion(null);
       await loadVersions();
     } catch (error) {
@@ -85,6 +118,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
     setCurrentVersion(null);
     setDraft('');
     clearDraft(stageId);
+    setLastSavedContent('');
   };
 
   const versionLabel = (entry: Entry) => {
@@ -103,7 +137,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
       </div>
 
       {versions.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           <button
             onClick={handleNew}
             className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
@@ -112,17 +146,45 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
           >
             ＋ 新版本
           </button>
-          {versions.map((v, i) => (
-            <button
-              key={v.id}
-              onClick={() => handleSelectVersion(v)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
-                currentVersion?.id === v.id ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-brand-200 bg-white text-brand-500 hover:text-brand-800'
-              }`}
+          {versions.length > 5 ? (
+            <select
+              value={currentVersion?.id ?? ''}
+              onChange={e => {
+                const v = versions.find(x => String(x.id) === e.target.value);
+                if (v) handleSelectVersion(v);
+              }}
+              className="max-w-56 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-bold text-brand-700 focus:border-emerald-400 focus:outline-none"
             >
-              v{versions.length - i} · {v.created_at?.slice(5, 10)}
-            </button>
-          ))}
+              <option value="">选择历史版本…</option>
+              {versions.map((v, i) => (
+                <option key={v.id} value={v.id}>
+                  v{versions.length - i} · {v.created_at?.slice(5, 10)} · {v.content.slice(0, 30)}{v.content.length > 30 ? '…' : ''}
+                </option>
+              ))}
+            </select>
+          ) : (
+            versions.map((v, i) => (
+              <span key={v.id} className="inline-flex items-center gap-0.5">
+                <button
+                  onClick={() => handleSelectVersion(v)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+                    currentVersion?.id === v.id ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-brand-200 bg-white text-brand-500 hover:text-brand-800'
+                  }`}
+                >
+                  v{versions.length - i} · {v.created_at?.slice(5, 10)}
+                </button>
+                {currentVersion?.id !== v.id && (
+                  <button
+                    onClick={() => handleDeleteVersion(v.id)}
+                    disabled={saving}
+                    title="删除此版本"
+                    aria-label="删除此版本"
+                    className="grid h-5 w-5 place-items-center rounded-full text-[10px] text-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
+                  >×</button>
+                )}
+              </span>
+            ))
+          )}
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import Database from '@tauri-apps/plugin-sql';
-import { MIGRATIONS, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
+import { MIGRATIONS, type Deviation, type DeviationTargetType, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
 
 let db: Database | null = null;
 
@@ -34,7 +34,15 @@ export async function getEntries(stageId?: string, limit = 50, offset = 0): Prom
   const d = await getDb();
   const where = stageId ? 'WHERE stage_id = $1' : '';
   const params = stageId ? [stageId] : [];
-  return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`, params);
+  return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC, id DESC LIMIT ${limit} OFFSET ${offset}`, params);
+}
+
+export async function getEntryCount(stageId?: string): Promise<number> {
+  const d = await getDb();
+  const where = stageId ? 'WHERE stage_id = $1' : '';
+  const params = stageId ? [stageId] : [];
+  const rows = await d.select<{ count: number }[]>(`SELECT COUNT(*) as count FROM entries ${where}`, params);
+  return rows[0]?.count ?? 0;
 }
 
 export async function getAllEntries(stageId?: string): Promise<Entry[]> {
@@ -124,7 +132,15 @@ export async function createTrait(trait: { name: string; description?: string; w
 
 export async function deleteTrait(id: number) {
   const d = await getDb();
-  await d.execute('DELETE FROM traits WHERE id = $1', [id]);
+  await d.execute('BEGIN');
+  try {
+    await d.execute("DELETE FROM deviations WHERE target_type = 'trait' AND target_id = $1", [id]);
+    await d.execute('DELETE FROM traits WHERE id = $1', [id]);
+    await d.execute('COMMIT');
+  } catch (error) {
+    try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
+    throw error;
+  }
 }
 
 export async function updateTrait(id: number, fields: { name?: string; description?: string; weight?: number; category?: string }) {
@@ -217,7 +233,38 @@ export async function updateFormDetail(id: number, description: string) {
 
 export async function deleteFormDetail(id: number) {
   const d = await getDb();
-  await d.execute('DELETE FROM form_details WHERE id = $1', [id]);
+  await d.execute('BEGIN');
+  try {
+    await d.execute("DELETE FROM deviations WHERE target_type = 'form' AND target_id = $1", [id]);
+    await d.execute('DELETE FROM form_details WHERE id = $1', [id]);
+    await d.execute('COMMIT');
+  } catch (error) {
+    try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
+    throw error;
+  }
+}
+
+// === CRUD：健康的偏离 / 演化记录 ===
+export async function getDeviations(targetType: DeviationTargetType, targetId: number): Promise<Deviation[]> {
+  const d = await getDb();
+  return d.select(
+    'SELECT * FROM deviations WHERE target_type = $1 AND target_id = $2 ORDER BY created_at DESC, id DESC',
+    [targetType, targetId]
+  );
+}
+
+export async function createDeviation(targetType: DeviationTargetType, targetId: number, note: string): Promise<number> {
+  const d = await getDb();
+  const result = await d.execute(
+    'INSERT INTO deviations (target_type, target_id, note) VALUES ($1, $2, $3)',
+    [targetType, targetId, note]
+  );
+  return result.lastInsertId as number;
+}
+
+export async function deleteDeviation(id: number) {
+  const d = await getDb();
+  await d.execute('DELETE FROM deviations WHERE id = $1', [id]);
 }
 
 // === CRUD：imposition_levels ===
@@ -263,7 +310,9 @@ export async function createMilestone(stageId: string, title: string, notes: str
 // === 统计查询 ===
 export async function getTotalDuration(): Promise<number> {
   const d = await getDb();
-  const rows: any[] = await d.select('SELECT COALESCE(SUM(duration_seconds), 0) as total FROM entries WHERE duration_seconds > 0');
+  // 排除 switch 类型——换位练习时长是「状态持续时间」而非「主动投入时间」，
+  // 混入会虚高「累计专注时长」并影响 10/50/100h 里程碑触发时机
+  const rows: any[] = await d.select("SELECT COALESCE(SUM(duration_seconds), 0) as total FROM entries WHERE duration_seconds > 0 AND type != 'switch'");
   return rows[0]?.total || 0;
 }
 

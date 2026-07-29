@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getDialogueMessages } from '../../db/database';
 import type { DialogueMessage } from '../../db/schema';
+import { useProfileStore } from '../../stores/useProfileStore';
 
 interface Props {
   entryId: number;
@@ -10,6 +11,7 @@ export default function DialogueDisplay({ entryId }: Props) {
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const tulpaName = useProfileStore(state => state.tulpaName) || 'Tulpa';
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +61,7 @@ export default function DialogueDisplay({ entryId }: Props) {
             }`}
           >
             <p className={`mb-0.5 text-[10px] font-bold ${msg.speaker === 'self' ? 'text-white/50' : 'text-brand-400'}`}>
-              {msg.speaker === 'self' ? 'You' : 'Tulpa'}
+              {msg.speaker === 'self' ? 'You' : tulpaName}
             </p>
             <p>{msg.content}</p>
           </div>

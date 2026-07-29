@@ -8,13 +8,16 @@ import IconButton from '../components/ui/IconButton';
 import EntryForm from '../components/ui/EntryForm';
 
 const TYPE_ICONS: Record<string, string> = { session: '⏱️', narration: '🗣️', dialogue: '💬', trait: '🧬', signal: '⚡', design: '🎨', dialogue_session: '💬', practice: '✍️', imposition: '👁', switch: '🔄', autonomy: '🧠', resonance: '💗', wonderland: '🏡', devotion: '📜' };
+const PAGE_SIZE = 200;
+const LOAD_MORE_THRESHOLD = 600;
 
 export default function TimelineLayout() {
-  const { entries, loadAllEntries, loading, removeEntry, updateEntry } = useEntryStore();
+  const { entries, totalEntries, loadEntries, loading, removeEntry, updateEntry } = useEntryStore();
   const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const loadingPageRef = useRef(false);
 
   const startEdit = (id: number) => {
     if (savingEdit) return;
@@ -46,8 +49,25 @@ export default function TimelineLayout() {
     }
   };
 
-  // 一次性加载全部 entries
-  useEffect(() => { loadAllEntries(); }, [loadAllEntries]);
+  // 首次只加载一页，后续滚动到底部时追加
+  useEffect(() => {
+    loadingPageRef.current = true;
+    loadEntries(undefined, PAGE_SIZE, 0).finally(() => {
+      loadingPageRef.current = false;
+    });
+  }, [loadEntries]);
+
+  const handleScroll = () => {
+    const element = scrollRef.current;
+    if (!element || loadingPageRef.current || loading || entries.length >= totalEntries) return;
+    const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+    if (distanceToBottom > LOAD_MORE_THRESHOLD) return;
+
+    loadingPageRef.current = true;
+    loadEntries(undefined, PAGE_SIZE, entries.length, true).finally(() => {
+      loadingPageRef.current = false;
+    });
+  };
 
   const virtualizer = useVirtualizer({
     count: entries.length,
@@ -58,7 +78,7 @@ export default function TimelineLayout() {
   });
 
   return (
-    <main ref={scrollRef} className="relative z-10 h-full overflow-y-auto overscroll-contain">
+    <main ref={scrollRef} onScroll={handleScroll} className="relative z-10 h-full overflow-y-auto overscroll-contain">
       <div className="mx-auto max-w-4xl px-4 py-9 sm:px-8 sm:py-12">
         <header className="mb-10 animate-[pageEnter_.45s_var(--ease)_both]"><p className="eyebrow">Our Story</p><h1 className="mt-3 text-3xl font-black tracking-tight text-brand-900">共同走过的时光</h1><p className="mt-2 text-sm leading-6 text-brand-500">每一次专注、每一句对话，都在这里留下温度。</p></header>
 
@@ -126,9 +146,9 @@ export default function TimelineLayout() {
           })}
         </div>
 
-        {entries.length > 0 && entries.length >= 2000 && (
-          <p className="pt-2 text-center text-[10px] text-amber-500 font-bold">
-            已显示最近 2000 条记录（达到上限）
+        {entries.length > 0 && (
+          <p className="pt-2 text-center text-[10px] font-bold text-brand-400">
+            已加载 {entries.length} / 共 {totalEntries} 条
           </p>
         )}
 

@@ -5,12 +5,13 @@ import type { Milestone } from '../../db/schema';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
-import Input from '../../components/ui/Input';
+import Input, { Textarea } from '../../components/ui/Input';
 
 export default function MilestoneList() {
   const { activeStageId } = useStageStore();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -23,8 +24,9 @@ export default function MilestoneList() {
     if (!title.trim() || saving) return;
     setSaving(true);
     try {
-      await createMilestone(activeStageId, title.trim(), '');
+      await createMilestone(activeStageId, title.trim(), notes.trim());
       setTitle('');
+      setNotes('');
       setShowForm(false);
       await load();
     } catch (e) { console.error(e); }
@@ -33,6 +35,7 @@ export default function MilestoneList() {
 
   const handleCancel = () => {
     setTitle('');
+    setNotes('');
     setShowForm(false);
   };
 
@@ -53,6 +56,7 @@ export default function MilestoneList() {
               <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-900 text-[10px] font-bold text-white">✓</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-black text-brand-900">{m.title}</p>
+                {m.notes && <p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-brand-600">{m.notes}</p>}
                 <p className="text-[10px] font-bold text-brand-400">{m.achieved_at?.slice(0, 16)}</p>
               </div>
             </div>
@@ -63,6 +67,7 @@ export default function MilestoneList() {
       {showForm ? (
         <div className="flex flex-col gap-2 rounded-2xl bg-brand-50 p-3">
           <Input autoFocus value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreate()} placeholder="里程碑名称…" disabled={saving} />
+          <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="备注…" disabled={saving} />
           <div className="flex gap-2">
             <Button size="sm" onClick={handleCreate} disabled={!title.trim() || saving}>{saving ? '保存中…' : '记录'}</Button>
             <Button size="sm" variant="ghost" onClick={handleCancel} disabled={saving}>取消</Button>

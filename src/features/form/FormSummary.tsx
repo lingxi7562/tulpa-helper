@@ -1,0 +1,49 @@
+import { useEffect } from 'react';
+import Card from '../../components/ui/Card';
+import { useFormStore } from '../../stores/useFormStore';
+
+const SENSES = [
+  { type: 'visual', label: '视觉', icon: '👁', style: 'border-purple-200 bg-purple-50 text-purple-700' },
+  { type: 'audio', label: '听觉', icon: '👂', style: 'border-blue-200 bg-blue-50 text-blue-700' },
+  { type: 'touch', label: '触觉', icon: '✋', style: 'border-amber-200 bg-amber-50 text-amber-700' },
+  { type: 'smell', label: '嗅觉', icon: '👃', style: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
+  { type: 'taste', label: '味觉', icon: '👅', style: 'border-rose-200 bg-rose-50 text-rose-700' },
+] as const;
+
+interface FormSummaryProps {
+  embedded?: boolean;
+}
+
+export default function FormSummary({ embedded = false }: FormSummaryProps) {
+  const { formDetails, loadFormDetails } = useFormStore();
+
+  useEffect(() => { loadFormDetails(); }, [loadFormDetails]);
+
+  if (formDetails.length === 0) return null;
+
+  const content = (
+    <>
+      <p className="mb-2 text-[10px] font-bold text-brand-400">形态蓝图 · 只读</p>
+      <div className="flex flex-wrap gap-1.5">
+        {SENSES.flatMap(sense => formDetails
+          .filter(detail => detail.sense_type === sense.type)
+          .map(detail => (
+            <span
+              key={detail.id}
+              title={`${sense.label}：${detail.description}`}
+              className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold ${sense.style}`}
+            >
+              <span className="text-[10px]">{sense.icon}</span>
+              <span className="truncate">{detail.description}</span>
+            </span>
+          )))}
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="mb-4 rounded-xl border border-purple-100 bg-white/60 p-3">{content}</div>;
+  }
+
+  return <Card padding="sm" hoverable={false}>{content}</Card>;
+}

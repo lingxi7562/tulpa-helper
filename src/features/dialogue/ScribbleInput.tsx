@@ -64,8 +64,8 @@ export default function ScribbleInput({ onSaved }: Props) {
   return (
     <Card hoverable={false}>
       <div className="mb-5 flex items-start justify-between gap-4"><div><h3 className="text-base font-black text-brand-900">随手记下此刻</h3><p className="mt-1 text-xs leading-6 text-brand-400">不必整理语言，真实的片刻本就珍贵。</p></div><Badge>速记</Badge></div>
-      <Textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); parseAndSave(); } }} placeholder="我说的话……\n/T Ta 的回应……（/T 标记下一段为 Ta 的话）" className="min-h-32" />
-      <div className="mt-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"><span className="text-[10px] leading-5 text-brand-400">在回应内容前加 <code className="rounded-md bg-brand-100 px-1.5 py-1 font-bold text-brand-700">/T</code>（只影响紧接的一段）· Ctrl+Enter 保存</span><Button onClick={parseAndSave} disabled={!text.trim() || saving} size="sm">{saving ? '保存中…' : '保存记录'}</Button></div>
+      <Textarea value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); parseAndSave(); } }} placeholder="我说的话……\n/T Ta 的回应……（/T 之后的内容会标记为 Tulpa 的发言，直到下一个 /T 或文本结束）" className="min-h-32" />
+      <div className="mt-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"><span className="text-[10px] leading-5 text-brand-400"><code className="rounded-md bg-brand-100 px-1.5 py-1 font-bold text-brand-700">/T</code> 之后的内容会被标记为 Tulpa 的发言，直到下一个 <code className="rounded-md bg-brand-100 px-1.5 py-1 font-bold text-brand-700">/T</code> 或文本结束 · Ctrl+Enter 保存</span><Button onClick={parseAndSave} disabled={!text.trim() || saving} size="sm">{saving ? '保存中…' : '保存记录'}</Button></div>
       {recentEntryIds.length > 0 && (
         <div className="mt-4 space-y-3">
           {recentEntryIds.map(id => (

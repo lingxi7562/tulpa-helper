@@ -8,6 +8,7 @@ export default function CommitmentConfirm() {
   const { addEntry } = useEntryStore();
   const [state, setState] = useState<'loading' | 'confirmed' | 'unconfirmed' | 'error'>('loading');
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const checkConfirmation = useCallback(async () => {
     setState('loading');
@@ -32,8 +33,10 @@ export default function CommitmentConfirm() {
         content: `于 ${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })} 确认开始这段旅程。`,
       });
       setState('confirmed');
+      setErrorMsg(null);
     } catch (error) {
       console.error(error);
+      setErrorMsg('确认失败，请重试');
     } finally {
       setSubmitting(false);
     }
@@ -81,6 +84,9 @@ export default function CommitmentConfirm() {
       <p className="mt-2 text-xs leading-5 text-brand-400">
         这个确认不意味着完美——它只意味着你愿意开始，并愿意在困难时也陪伴在旁。
       </p>
+      {errorMsg && (
+        <p className="mt-3 text-xs font-bold text-red-500">{errorMsg}</p>
+      )}
       <Button onClick={handleConfirm} disabled={submitting} className="mt-5" size="sm" icon="✓">{submitting ? '确认中…' : '我准备好了，确认开始'}</Button>
     </Card>
   );

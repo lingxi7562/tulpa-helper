@@ -4,6 +4,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
+import EvolutionLog from '../evolution/EvolutionLog';
 
 const SENSES = [
   { type: 'visual', label: '视觉', icon: '👁', bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-700' },
@@ -71,8 +72,11 @@ export default function FormBuilder() {
 
   const switchSense = (sense: SenseType) => {
     if (saving) return;
+    // 切换前若有未保存草稿，先确认，避免静默丢失
+    if (draft.trim() && !window.confirm('切换感官将丢弃未保存的内容，确定继续？')) return;
     setActiveSense(sense);
     setEditingId(null);
+    setDeletingId(null); // 清理残留的删除确认态
     setDraft('');
   };
 
@@ -162,6 +166,7 @@ export default function FormBuilder() {
                 </div>
               </div>
             )}
+            <EvolutionLog targetType="form" targetId={detail.id} />
           </div>
         )) : (
           <p className="text-xs text-brand-400 py-2">不需要面面俱到——想到什么就记下什么。</p>

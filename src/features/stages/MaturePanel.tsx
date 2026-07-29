@@ -9,6 +9,8 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Heatmap from '../../components/ui/Heatmap';
 import { useFormStore } from '../../stores/useFormStore';
+import { formatDuration } from '../../lib/format';
+import FormSummary from '../form/FormSummary';
 
 const SENSES = [
   { type: 'visual', label: '视觉', icon: '👁', priority: 'primary' as const },
@@ -27,16 +29,29 @@ const IMPOSITION_STAGES = [
 
 const MAX_LEVEL = 4;
 
-function formatDuration(seconds: number) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours > 0 ? `${hours} 小时 ${minutes} 分钟` : `${minutes} 分钟`;
+function FormReference({ senseType, senseLabel, formDetails }: {
+  senseType: string;
+  senseLabel: string;
+  formDetails: { id: number; sense_type: string; description: string }[];
+}) {
+  const details = formDetails.filter(detail => detail.sense_type === senseType);
+  return details.length > 0 ? (
+    <div className="mt-3 rounded-lg border border-purple-100 bg-white/75 p-2 text-left">
+      <p className="mb-1 text-[9px] font-bold text-purple-400">形态参考</p>
+      {details.map(detail => (
+        <p key={detail.id} className="text-[10px] leading-relaxed text-brand-600">{detail.description}</p>
+      ))}
+    </div>
+  ) : (
+    <p className="mt-3 text-[9px] leading-relaxed text-brand-400">准备期未记录{senseLabel}描述</p>
+  );
 }
 
 export default function MaturePanel() {
   const [levels, setLevels] = useState<{ sense_type: string; level: number }[]>([]);
   const [editingSense, setEditingSense] = useState<string | null>(null);
   const [savingSense, setSavingSense] = useState<string | null>(null);
+  const [showExtendedSenses, setShowExtendedSenses] = useState(false);
   const { heatmapData, stageBreakdown, totalSeconds, refresh } = useStats();
   const { formDetails, loadFormDetails } = useFormStore();
 
@@ -88,8 +103,9 @@ export default function MaturePanel() {
           <h3 className="font-black text-brand-900">Imposition 感官练习</h3>
           <p className="mt-1 text-xs text-brand-400">一次只专注一种感受，缓慢建立清晰度。</p>
         </div>
+        <FormSummary embedded />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {SENSES.map(sense => {
+          {SENSES.filter(s => s.priority === 'primary').map(sense => {
             const lvl = levels.find(l => l.sense_type === sense.type);
             const lv = lvl?.level ?? 1;
             const editing = editingSense === sense.type;
@@ -97,29 +113,13 @@ export default function MaturePanel() {
             return (
               <div
                 key={sense.type}
-                className={`rounded-2xl border p-4 text-center ${
-                  sense.priority === 'secondary'
-                    ? 'border-purple-50 bg-purple-50/30 opacity-75'
-                    : 'border-purple-100 bg-purple-50/50'
-                }`}
+                className="rounded-2xl border border-purple-100 bg-purple-50/50 p-4 text-center"
               >
                 <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-xl bg-white text-lg shadow-sm">{sense.icon}</span>
                 <p className="text-xs font-black text-brand-700">{sense.label}</p>
+                <FormReference senseType={sense.type} senseLabel={sense.label} formDetails={formDetails} />
                 {editing ? (
                   <div className="mt-2">
-                    {(() => {
-                      const formForSense = formDetails.filter(d => d.sense_type === sense.type);
-                      return formForSense.length > 0 ? (
-                        <div className="mb-2 mt-1 max-h-16 overflow-y-auto rounded-lg bg-white/70 p-1.5 text-left">
-                          {formForSense.slice(0, 2).map(d => (
-                            <p key={d.id} className="text-[10px] leading-relaxed text-brand-500">&quot;{d.description.slice(0, 40)}{d.description.length > 40 ? '…' : ''}&quot;</p>
-                          ))}
-                          {formForSense.length > 2 && <p className="text-[9px] text-brand-400">+{formForSense.length - 2} 条</p>}
-                        </div>
-                      ) : (
-                        <p className="mb-2 mt-1 text-[9px] text-brand-400">准备期未记录{sense.label}描述</p>
-                      );
-                    })()}
                     <div className="flex items-center justify-center gap-1.5">
                       <button
                         onClick={() => handleLevel(sense.type, Math.max(1, lv - 1))}
@@ -146,13 +146,66 @@ export default function MaturePanel() {
                     className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
                   >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
                 )}
-                {sense.priority === 'secondary' && (
-                  <span className="mt-1 block text-[9px] text-purple-300">进阶</span>
-                )}
               </div>
             );
           })}
         </div>
+
+        {/* 扩展感官（嗅觉/味觉）：社区实践中极少使用，默认折叠以避免无谓压力 */}
+        <button
+          onClick={() => setShowExtendedSenses(v => !v)}
+          className="mt-3 text-[10px] font-bold text-purple-400 hover:text-purple-600"
+        >
+          {showExtendedSenses ? '收起扩展感官 ▲' : '展开扩展感官（嗅觉 / 味觉） ▼'}
+        </button>
+        {showExtendedSenses && (
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {SENSES.filter(s => s.priority === 'secondary').map(sense => {
+              const lvl = levels.find(l => l.sense_type === sense.type);
+              const lv = lvl?.level ?? 1;
+              const editing = editingSense === sense.type;
+              const isSaving = savingSense === sense.type;
+              return (
+                <div
+                  key={sense.type}
+                  className="rounded-2xl border border-purple-50 bg-purple-50/30 p-4 text-center opacity-80"
+                >
+                  <span className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-xl bg-white text-lg shadow-sm">{sense.icon}</span>
+                  <p className="text-xs font-black text-brand-700">{sense.label}</p>
+                  <FormReference senseType={sense.type} senseLabel={sense.label} formDetails={formDetails} />
+                  {editing ? (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleLevel(sense.type, Math.max(1, lv - 1))}
+                          disabled={isSaving || lv <= 1}
+                          className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
+                          aria-label="减少等级"
+                        >−</button>
+                        <span className="min-w-[2em] text-center text-xs font-black text-purple-700 tabular-nums">
+                          {isSaving ? '…' : (IMPOSITION_STAGES[lv - 1]?.name || lv)}
+                        </span>
+                        <button
+                          onClick={() => handleLevel(sense.type, Math.min(MAX_LEVEL, lv + 1))}
+                          disabled={isSaving || lv >= MAX_LEVEL}
+                          className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
+                          aria-label="增加等级"
+                        >+</button>
+                      </div>
+                      <p className="mt-1 text-[9px] text-purple-400">{IMPOSITION_STAGES[lv - 1]?.desc}</p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => toggleEdit(sense.type)}
+                      disabled={savingSense !== null}
+                      className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
+                    >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Card>
 
       <SwitchingLog onSaved={refresh} />

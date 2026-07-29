@@ -5,7 +5,9 @@ import type { Milestone } from '../db/schema';
 const THRESHOLDS = [10, 50, 100] as const;
 
 function milestoneTitle(hours: number): string {
-  return `累计 ${hours} 小时`;
+  if (hours === 10) return '每一小时的陪伴都算数';
+  if (hours === 50) return '五十个小时，我们一起走过';
+  return '一百个小时，感谢这份坚持';
 }
 
 interface MilestoneState {
