@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getMilestones, createMilestone } from '../../db/database';
+import { getMilestones, createMilestone, deleteMilestone } from '../../db/database';
 import { useStageStore } from '../../stores/useStageStore';
 import type { Milestone } from '../../db/schema';
 import Card from '../../components/ui/Card';
@@ -14,10 +14,11 @@ export default function MilestoneList() {
   const [notes, setNotes] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
-    try { setMilestones(await getMilestones() as Milestone[]); } catch (e) { console.error(e); }
-  }, []);
+    try { setMilestones(await getMilestones(activeStageId) as Milestone[]); } catch (e) { console.error(e); }
+  }, [activeStageId]);
   useEffect(() => { load(); }, [load]);
 
   const handleCreate = async () => {
@@ -52,12 +53,38 @@ export default function MilestoneList() {
       {milestones.length > 0 && (
         <div className="mb-4 max-h-56 space-y-2 overflow-y-auto">
           {milestones.map(m => (
-            <div key={m.id} className="flex items-start gap-3 rounded-2xl border border-brand-200 bg-white p-3">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-900 text-[10px] font-bold text-white">✓</span>
+            <div key={m.id} className="group flex items-start gap-3 rounded-2xl border border-brand-200 bg-white p-3">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-500">✦</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-black text-brand-900">{m.title}</p>
                 {m.notes && <p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-brand-600">{m.notes}</p>}
                 <p className="text-[10px] font-bold text-brand-400">{m.achieved_at?.slice(0, 16)}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1 opacity-60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                {deletingId === m.id ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1 py-0.5">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await deleteMilestone(m.id);
+                          setDeletingId(null);
+                          await load();
+                        } catch (e) { console.error(e); }
+                      }}
+                      className="grid h-6 min-w-6 place-items-center rounded-full bg-red-600 px-2 text-[10px] font-bold text-white"
+                    >确认</button>
+                    <button
+                      onClick={() => setDeletingId(null)}
+                      className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-2 text-[10px] font-bold text-brand-600"
+                    >取消</button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setDeletingId(m.id)}
+                    className="grid h-6 w-6 place-items-center rounded-full text-[10px] text-red-500 hover:bg-red-50"
+                    aria-label="删除里程碑"
+                  >×</button>
+                )}
               </div>
             </div>
           ))}

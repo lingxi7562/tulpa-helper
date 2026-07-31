@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useFormStore } from '../../stores/useFormStore';
+import { useToast } from '../../hooks/useToast';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -18,6 +19,7 @@ type SenseType = typeof SENSES[number]['type'];
 
 export default function FormBuilder() {
   const { formDetails, loadFormDetails, saveFormDetail, updateFormDetail, deleteFormDetail } = useFormStore();
+  const { show } = useToast();
   const [activeSense, setActiveSense] = useState<SenseType>('visual');
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -42,6 +44,7 @@ export default function FormBuilder() {
       setDraft('');
     } catch (error) {
       console.error(error);
+      show('保存失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -54,6 +57,7 @@ export default function FormBuilder() {
       await deleteFormDetail(id);
     } catch (error) {
       console.error(error);
+      show('删除失败，请重试');
     } finally {
       setDeletingId(null);
     }
@@ -148,7 +152,6 @@ export default function FormBuilder() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1 py-0.5">
                       <button
                         onClick={() => handleDelete(detail.id)}
-                        disabled={deletingId !== detail.id}
                         className="grid h-7 min-w-7 place-items-center rounded-full bg-red-600 px-2 text-[10px] font-bold text-white"
                       >确认</button>
                       <button

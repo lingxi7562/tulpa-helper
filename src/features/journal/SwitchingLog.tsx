@@ -18,6 +18,7 @@ export default function SwitchingLog({ onSaved }: Props) {
   const [duration, setDuration] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -59,7 +60,7 @@ export default function SwitchingLog({ onSaved }: Props) {
       </div>
       {logs.length > 0 && (
         <div className="mb-4 max-h-40 space-y-2 overflow-y-auto">
-          {logs.slice(0, 8).map(log => (
+          {(showAll ? logs : logs.slice(0, 8)).map(log => (
             <div key={log.id} className="rounded-2xl border border-purple-100 bg-purple-50/50 p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-black text-brand-700">{log.title}</p>
@@ -68,6 +69,14 @@ export default function SwitchingLog({ onSaved }: Props) {
               {log.content && <p className="mt-1 text-xs leading-5 text-brand-600">{log.content}</p>}
             </div>
           ))}
+          {logs.length > 8 && (
+            <button
+              onClick={() => setShowAll(v => !v)}
+              className="w-full rounded-xl border border-dashed border-purple-200 py-1.5 text-[10px] font-bold text-purple-500 hover:bg-purple-50"
+            >
+              {showAll ? '收起' : `查看更多（还有 ${logs.length - 8} 条）`}
+            </button>
+          )}
         </div>
       )}
       <div className="flex flex-col gap-2 rounded-2xl bg-brand-50 p-3">

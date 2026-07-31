@@ -8,6 +8,7 @@ interface StatsData {
   heatmapData: { day: string; total: number }[];
   consecutiveDays: number;
   loading: boolean;
+  error: boolean;
 }
 
 export function useStats(): StatsData & { refresh: () => void } {
@@ -18,6 +19,7 @@ export function useStats(): StatsData & { refresh: () => void } {
     heatmapData: [],
     consecutiveDays: 0,
     loading: true,
+    error: false,
   });
 
   const refresh = useCallback(async () => {
@@ -43,9 +45,11 @@ export function useStats(): StatsData & { refresh: () => void } {
         heatmapData: heatmap,
         consecutiveDays: consecutive,
         loading: false,
+        error: false,
       });
     } catch (error) {
       console.error(error);
+      setData((d) => ({ ...d, loading: false, error: true }));
     } finally {
       setData((d) => ({ ...d, loading: false }));
     }

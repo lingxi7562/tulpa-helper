@@ -18,7 +18,7 @@ export default function DevelopmentPanel() {
       <FocusTimer sessionTypes={[{ label: '对话会话', value: 'dialogue_session' }]} />
       <ScribbleInput />
       <AutonomyLog />
-      <WonderlandEditor stageId="dev" />
+      <WonderlandEditor stageId="dev" variant="dev" />
       <ResonanceTracker />
     </div>
   );

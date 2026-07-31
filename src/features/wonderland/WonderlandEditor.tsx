@@ -26,9 +26,10 @@ function clearDraft(stageId: string) {
 
 interface Props {
   stageId?: string;
+  variant?: 'prep' | 'dev';
 }
 
-export default function WonderlandEditor({ stageId = 'prep' }: Props) {
+export default function WonderlandEditor({ stageId = 'prep', variant = 'prep' }: Props) {
   const { addEntry } = useEntryStore();
   const [versions, setVersions] = useState<Entry[]>([]);
   const [currentVersion, setCurrentVersion] = useState<Entry | null>(null);
@@ -92,7 +93,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
       await addEntry({
         stage_id: stageId,
         type: 'wonderland',
-        title: content.slice(0, 50),
+        title: Array.from(content).slice(0, 50).join(''),
         content,
       });
       setDraft('');
@@ -126,15 +127,62 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
     return idx >= 0 ? `v${versions.length - idx}` : '';
   };
 
+  // 上一版本：versions 按 created_at DESC 排序，currentVersion 的上一版本是数组中紧随其后的更旧一条
+  const prevVersion = currentVersion
+    ? versions[versions.findIndex(v => v.id === currentVersion.id) + 1] ?? null
+    : null;
+  const [showDiff, setShowDiff] = useState(false);
+
+  const diffLines = (() => {
+    if (!currentVersion || !prevVersion) return [];
+    const a = prevVersion.content.split('\n');
+    const b = currentVersion.content.split('\n');
+    const max = Math.max(a.length, b.length);
+    const lines: { kind: 'same' | 'add' | 'del'; text: string }[] = [];
+    for (let i = 0; i < max; i++) {
+      if (i < a.length && i < b.length) {
+        lines.push(a[i] === b[i] ? { kind: 'same', text: a[i] } : { kind: 'del', text: a[i] });
+        if (a[i] !== b[i]) lines.push({ kind: 'add', text: b[i] });
+      } else if (i < a.length) {
+        lines.push({ kind: 'del', text: a[i] });
+      } else {
+        lines.push({ kind: 'add', text: b[i] });
+      }
+    }
+    return lines.filter(l => l.kind !== 'same').slice(0, 30);
+  })();
+
   return (
     <Card hoverable={false}>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h3 className="font-black text-brand-900">Wonderland 心象空间</h3>
-          <p className="mt-1 text-xs leading-6 text-brand-400">为你们构建一处安心相见的地方。</p>
+          <h3 className="font-black text-brand-900">{variant === 'dev' ? 'Wonderland 互动记录' : 'Wonderland 心象空间'}</h3>
+          <p className="mt-1 text-xs leading-6 text-brand-400">{variant === 'dev' ? '记录你们在这里一起做过的事——散步、交谈、飞行……' : '为你们构建一处安心相见的地方。'}</p>
         </div>
         <Badge variant="prep">{versions.length} 版</Badge>
       </div>
+
+      {currentVersion && prevVersion && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowDiff(v => !v)}
+            className="text-[10px] font-bold text-brand-500 hover:text-brand-800"
+          >
+            {showDiff ? '收起对比 ▲' : `对比上一版本（${versionLabel(prevVersion)} → ${versionLabel(currentVersion)}）▼`}
+          </button>
+          {showDiff && (
+            <div className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-brand-100 bg-white/70 p-3">
+              {diffLines.length > 0 ? diffLines.map((l, i) => (
+                <p key={i} className={`text-[10px] leading-5 ${l.kind === 'add' ? 'text-emerald-600' : l.kind === 'del' ? 'text-red-400 line-through' : 'text-brand-400'}`}>
+                  {l.kind === 'add' ? '+ ' : l.kind === 'del' ? '− ' : '  '}{l.text || ' '}
+                </p>
+              )) : (
+                <p className="text-[10px] text-brand-400">两版本内容相同</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {versions.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -197,7 +245,7 @@ export default function WonderlandEditor({ stageId = 'prep' }: Props) {
         <Textarea
           value={draft}
           onChange={e => setDraft(e.target.value)}
-          placeholder="描述你们的心象空间——光线、气味、声音、温度……"
+          placeholder={variant === 'dev' ? '今天在 Wonderland 里，你们一起……' : '描述你们的心象空间——光线、气味、声音、温度……'}
           className="min-h-32"
         />
         <Button size="sm" onClick={handleSave} disabled={!draft.trim() || saving}>

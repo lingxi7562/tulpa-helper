@@ -307,6 +307,30 @@ export async function createMilestone(stageId: string, title: string, notes: str
   );
 }
 
+export async function deleteMilestone(id: number) {
+  const d = await getDb();
+  await d.execute('DELETE FROM milestones WHERE id = $1', [id]);
+}
+
+// 编辑 dialogue 条目后重写其对话消息（删除旧消息按 seq 重新插入）
+export async function updateDialogueMessages(entryId: number, messages: { speaker: Speaker; content: string }[]) {
+  const d = await getDb();
+  await d.execute('BEGIN');
+  try {
+    await d.execute('DELETE FROM dialogue_messages WHERE entry_id = $1', [entryId]);
+    for (let i = 0; i < messages.length; i++) {
+      await d.execute(
+        'INSERT INTO dialogue_messages (entry_id, speaker, content, seq) VALUES ($1, $2, $3, $4)',
+        [entryId, messages[i].speaker, messages[i].content, i]
+      );
+    }
+    await d.execute('COMMIT');
+  } catch (e) {
+    try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
+    throw e;
+  }
+}
+
 // === 统计查询 ===
 export async function getTotalDuration(): Promise<number> {
   const d = await getDb();

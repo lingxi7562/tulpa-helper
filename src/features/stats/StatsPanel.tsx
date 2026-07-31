@@ -10,11 +10,16 @@ import { formatDuration } from '../../lib/format';
 interface Props { onClose: () => void; }
 
 export default function StatsPanel({ onClose }: Props) {
-  const { totalSeconds, stageBreakdown, dailyDurations, heatmapData, consecutiveDays, loading } = useStats();
+  const { totalSeconds, stageBreakdown, dailyDurations, heatmapData, consecutiveDays, loading, error } = useStats();
   if (loading) return <main className="grid h-full place-items-center"><div className="flex items-center gap-3 text-sm font-semibold text-brand-400"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />正在整理共同的时光…</div></main>;
   return (
     <main className="h-full overflow-y-auto overscroll-contain">
       <div className="panel-page space-y-5">
+        {error && (
+          <Card hoverable={false} className="border-red-200/70 bg-red-50/40">
+            <p className="text-xs font-bold text-red-500">统计数据加载失败，请稍后重试。</p>
+          </Card>
+        )}
         <header className="mb-8 flex items-end justify-between gap-4"><div><p className="eyebrow">Quiet Progress</p><h1 className="mt-3 text-3xl font-black tracking-tight text-brand-900">时间的温柔回响</h1><p className="mt-2 text-sm text-brand-500">不追赶数字，只看见每一次认真相伴。</p></div><Button variant="secondary" onClick={onClose} icon="←">返回</Button></header>
         <Card hoverable={false} padding="lg" className="relative border-brand-700 bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 text-white shadow-[0_24px_60px_rgba(63,57,49,.22)]"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full border-[42px] border-white/[.045]" /><div className="relative grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end"><div><p className="text-xs font-bold tracking-[.16em] text-brand-200">累计专注时长</p><strong className="mt-3 block text-4xl tracking-tight sm:text-5xl">{formatDuration(totalSeconds)}</strong><p className="mt-3 text-xs leading-6 text-brand-200">每一分钟，都让彼此的存在更加清晰。</p></div><div className="rounded-2xl border border-white/10 bg-white/10 px-6 py-4 backdrop-blur"><strong className="text-3xl">{consecutiveDays}</strong><span className="ml-2 text-xs text-brand-200">天连续陪伴</span></div></div></Card>
         <div className="grid gap-5 lg:grid-cols-2">

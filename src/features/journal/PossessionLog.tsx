@@ -6,6 +6,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
+import Input from '../../components/ui/Input';
 import type { Entry } from '../../db/schema';
 
 const BODY_PARTS = ['手部', '手臂', '头部', '全身', '其他'];
@@ -17,8 +18,10 @@ export default function PossessionLog({ onSaved }: Props) {
   const { activeStageId } = useStageStore();
   const [logs, setLogs] = useState<Entry[]>([]);
   const [part, setPart] = useState('手部');
+  const [customPart, setCustomPart] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -34,14 +37,16 @@ export default function PossessionLog({ onSaved }: Props) {
     setSaving(true);
     try {
       const content = notes.trim();
+      const finalPart = part === '其他' && customPart.trim() ? customPart.trim() : part;
       await addEntry({
         stage_id: activeStageId,
         type: 'practice',
-        title: `附身练习 · ${part}`,
+        title: `附身练习 · ${finalPart}`,
         content,
-        tags: JSON.stringify(['possession', `part:${part}`]),
+        tags: JSON.stringify(['possession', `part:${finalPart}`]),
       });
       setNotes('');
+      setCustomPart('');
       await load();
       onSaved?.();
     } catch (error) { console.error(error); }
@@ -56,7 +61,7 @@ export default function PossessionLog({ onSaved }: Props) {
       </div>
       {logs.length > 0 && (
         <div className="mb-4 max-h-40 space-y-2 overflow-y-auto">
-          {logs.slice(0, 8).map(log => (
+          {(showAll ? logs : logs.slice(0, 8)).map(log => (
             <div key={log.id} className="rounded-2xl border border-purple-100 bg-purple-50/50 p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-black text-brand-700">{log.title}</p>
@@ -65,6 +70,14 @@ export default function PossessionLog({ onSaved }: Props) {
               {log.content && <p className="mt-1 text-xs leading-5 text-brand-600">{log.content}</p>}
             </div>
           ))}
+          {logs.length > 8 && (
+            <button
+              onClick={() => setShowAll(v => !v)}
+              className="w-full rounded-xl border border-dashed border-purple-200 py-1.5 text-[10px] font-bold text-purple-500 hover:bg-purple-50"
+            >
+              {showAll ? '收起' : `查看更多（还有 ${logs.length - 8} 条）`}
+            </button>
+          )}
         </div>
       )}
       <div className="flex flex-col gap-2 rounded-2xl bg-brand-50 p-3">
@@ -80,6 +93,15 @@ export default function PossessionLog({ onSaved }: Props) {
             >{p}</button>
           ))}
         </div>
+        {part === '其他' && (
+          <Input
+            value={customPart}
+            onChange={e => setCustomPart(e.target.value)}
+            placeholder="具体部位…"
+            disabled={saving}
+            className="w-full"
+          />
+        )}
         <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="练习部位与进展…" disabled={saving} className="min-h-16" />
         <Button size="sm" onClick={handleSave} disabled={!notes.trim() || saving}>{saving ? '保存中…' : '记录'}</Button>
         <p className="mt-2 text-[10px] leading-relaxed text-amber-600">

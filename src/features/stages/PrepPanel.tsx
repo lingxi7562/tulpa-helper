@@ -28,6 +28,7 @@ export default function PrepPanel() {
         <div className="pointer-events-none absolute -right-7 -top-10 text-[128px] opacity-[.055]">{STAGES.prep.icon}</div>
         <div className="relative flex items-center gap-4"><span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-2xl shadow-[0_10px_24px_rgba(16,185,129,.14)]">{STAGES.prep.icon}</span><div><Badge variant="prep">CHAPTER 01</Badge><h1 className="mt-3 text-2xl font-black tracking-tight text-brand-900 sm:text-3xl">{STAGES.prep.name}</h1><p className="mt-1 text-sm leading-6 text-brand-500">定义蓝图，让一段珍贵的关系从想象中萌芽。</p></div></div>
       </Card>
+      <CommitmentConfirm />
       <FocusTimer sessionTypes={PREP_SESSION_TYPES} />
       <Card hoverable={false}>
         <h3 className="font-black text-brand-900">Ta 的名字</h3>
@@ -49,7 +50,6 @@ export default function PrepPanel() {
       <TraitManager />
       <FormBuilder />
       <WonderlandEditor stageId="prep" />
-      <CommitmentConfirm />
 
       {/* 开始之前：预期管理（deviation / doubt / parroting） */}
       <Card hoverable={false} className="border-amber-200/60 bg-amber-50/40">

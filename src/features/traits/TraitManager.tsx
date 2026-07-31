@@ -56,7 +56,7 @@ export default function TraitManager() {
 
   const handleTierCycle = async (id: number) => {
     const trait = traits.find(t => t.id === id);
-    if (!trait || updatingId !== null) return;
+    if (!trait || updatingId === id) return;
     setUpdatingId(id);
     try {
       await updateTrait(id, { weight: nextTierWeight(trait.weight) });

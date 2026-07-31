@@ -62,7 +62,7 @@ export default function MaturePanel() {
   useEffect(() => { loadFormDetails(); }, [loadFormDetails]);
 
   const handleLevel = async (sense: string, level: number) => {
-    if (savingSense !== null) return;
+    if (savingSense === sense) return;
     setSavingSense(sense);
     try {
       await setImpositionLevel(sense, level);
@@ -75,7 +75,7 @@ export default function MaturePanel() {
   };
 
   const toggleEdit = (sense: string) => {
-    if (savingSense !== null) return;
+    if (savingSense === sense) return;
     setEditingSense(current => current === sense ? null : sense);
   };
 
@@ -142,7 +142,7 @@ export default function MaturePanel() {
                 ) : (
                   <button
                     onClick={() => toggleEdit(sense.type)}
-                    disabled={savingSense !== null}
+                    disabled={savingSense === sense.type}
                     className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
                   >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
                 )}
@@ -197,7 +197,7 @@ export default function MaturePanel() {
                   ) : (
                     <button
                       onClick={() => toggleEdit(sense.type)}
-                      disabled={savingSense !== null}
+                      disabled={savingSense === sense.type}
                       className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
                     >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
                   )}
@@ -206,6 +206,10 @@ export default function MaturePanel() {
             })}
           </div>
         )}
+        {/* 循序渐进：倾听身体信号，避免过度练习 */}
+        <p className="mt-3 text-[10px] leading-relaxed text-amber-600">
+          ⚠ 循序渐进，倾听身体信号。若感到压力或不适，请放慢节奏——过度练习可能导致倦怠。
+        </p>
       </Card>
 
       <SwitchingLog onSaved={refresh} />

@@ -164,7 +164,7 @@ export default function ResonanceTracker() {
                     style={{ height: `${height}%` }}
                   />
                 ) : (
-                  <div className="w-full max-w-8 rounded-t-lg bg-brand-100" style={{ height: '8px' }} />
+                  <div className="w-full max-w-8 rounded-t-lg bg-brand-100/60" style={{ height: '3px' }} title="未记录" />
                 )}
                 <span className="text-[9px] text-brand-400">{isoWeekLabel(weekStart)}</span>
               </div>
