@@ -12,6 +12,7 @@ import FormSummary from '../form/FormSummary';
 
 export default function CreationPanel() {
   const { loadEntries } = useEntryStore();
+  const entryRevision = useEntryStore(state => state.revision);
   useEffect(() => { loadEntries('create'); }, [loadEntries]);
 
   const [typeCounts, setTypeCounts] = useState<Record<string, number>>({ session: 0, narration: 0, dialogue: 0, signal: 0 });
@@ -20,7 +21,7 @@ export default function CreationPanel() {
   useEffect(() => {
     getStageTypeCounts('create').then(setTypeCounts).catch(console.error);
     getConsecutiveDays().then(setConsecutiveDays).catch(console.error);
-  }, []);
+  }, [entryRevision]);
 
   const stats = {
     sessions: (typeCounts.session || 0) + (typeCounts.narration || 0),
@@ -41,7 +42,7 @@ export default function CreationPanel() {
       <FormSummary />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{items.map(item => <Card key={item.label} padding="sm"><div className="mb-4 flex items-start justify-between gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-50">{item.icon}</span><strong className="text-2xl text-brand-900">{item.value}</strong></div><p className="text-xs font-black text-brand-700">{item.label}</p><p className="mt-1 text-[10px] text-brand-400">{item.unit}</p></Card>)}</div>
       <SignalInput />
-      <FocusTimer sessionTypes={[{ label: 'Narration', value: 'narration' }, { label: 'Active Forcing', value: 'session' }]} />
+      <FocusTimer />
       <ScribbleInput />
     </div>
   );

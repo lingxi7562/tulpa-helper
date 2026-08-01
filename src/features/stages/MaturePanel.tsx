@@ -93,10 +93,7 @@ export default function MaturePanel() {
         </div>
       </Card>
 
-      <FocusTimer
-        sessionTypes={[{ label: 'Imposition', value: 'imposition' }, { label: 'Switching', value: 'switch' }, { label: 'Possession', value: 'practice' }]}
-        onComplete={refresh}
-      />
+      <FocusTimer />
 
       <Card hoverable={false}>
         <div className="mb-5">

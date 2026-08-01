@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getTotalDuration, getDurationByStage, getDailyDurations, getConsecutiveDays } from '../db/database';
+import { useEntryStore } from '../stores/useEntryStore';
 
 interface StatsData {
   totalSeconds: number;
@@ -12,6 +13,7 @@ interface StatsData {
 }
 
 export function useStats(): StatsData & { refresh: () => void } {
+  const entryRevision = useEntryStore(state => state.revision);
   const [data, setData] = useState<StatsData>({
     totalSeconds: 0,
     stageBreakdown: [],
@@ -55,7 +57,7 @@ export function useStats(): StatsData & { refresh: () => void } {
     }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { refresh(); }, [entryRevision, refresh]);
 
   return { ...data, refresh };
 }

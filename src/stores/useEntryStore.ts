@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import { getEntries, getEntryCount, createEntry, deleteEntry, updateEntry } from '../db/database';
+import { getEntries, getEntryById, getEntryCount, createEntry, deleteEntry, updateEntry } from '../db/database';
 import type { Entry, EntryType } from '../db/schema';
 
 interface EntryState {
   entries: Entry[];
   totalEntries: number;
+  revision: number;
+  queryStageId: string | null;
   loading: boolean;
   loadEntries: (stageId?: string, limit?: number, offset?: number, append?: boolean) => Promise<void>;
   addEntry: (e: { stage_id: string; type: EntryType; title: string; content?: string; tags?: string; duration_seconds?: number; mood?: number }) => Promise<number>;
@@ -15,6 +17,8 @@ interface EntryState {
 export const useEntryStore = create<EntryState>((set) => ({
   entries: [],
   totalEntries: 0,
+  revision: 0,
+  queryStageId: null,
   loading: false,
   loadEntries: async (stageId, limit = 50, offset = 0, append = false) => {
     set({ loading: true });
@@ -26,6 +30,7 @@ export const useEntryStore = create<EntryState>((set) => ({
       set((s) => ({
         entries: append ? [...s.entries, ...rows] : rows,
         totalEntries,
+        queryStageId: append ? s.queryStageId : (stageId ?? null),
       }));
     } catch (error) {
       console.error(error);
@@ -37,11 +42,22 @@ export const useEntryStore = create<EntryState>((set) => ({
     set({ loading: true });
     try {
       const id = await createEntry(e);
-      const [rows, totalEntries] = await Promise.all([
-        getEntries(),
-        getEntryCount(),
-      ]);
-      set({ entries: rows, totalEntries });
+      let created: Entry | null = null;
+      try {
+        created = await getEntryById(id);
+      } catch (refreshError) {
+        console.error(refreshError);
+      }
+      set((state) => {
+        const belongsToQuery = state.queryStageId === null || state.queryStageId === e.stage_id;
+        return {
+          entries: belongsToQuery && created
+            ? [created, ...state.entries.filter(entry => entry.id !== created?.id)]
+            : state.entries,
+          totalEntries: belongsToQuery ? state.totalEntries + 1 : state.totalEntries,
+          revision: state.revision + 1,
+        };
+      });
       return id;
     } catch (error) {
       console.error(error);
@@ -57,6 +73,7 @@ export const useEntryStore = create<EntryState>((set) => ({
       set((s) => ({
         entries: s.entries.filter((e) => e.id !== id),
         totalEntries: Math.max(0, s.totalEntries - 1),
+        revision: s.revision + 1,
       }));
     } catch (error) {
       console.error(error);
@@ -69,7 +86,10 @@ export const useEntryStore = create<EntryState>((set) => ({
     set({ loading: true });
     try {
       await updateEntry(id, fields);
-      set((s) => ({ entries: s.entries.map(e => e.id === id ? { ...e, ...fields } as Entry : e) }));
+      set((s) => ({
+        entries: s.entries.map(e => e.id === id ? { ...e, ...fields } as Entry : e),
+        revision: s.revision + 1,
+      }));
     } catch (error) {
       console.error(error);
       throw error;

@@ -45,6 +45,12 @@ export async function getEntryCount(stageId?: string): Promise<number> {
   return rows[0]?.count ?? 0;
 }
 
+export async function getEntryById(id: number): Promise<Entry | null> {
+  const d = await getDb();
+  const rows = await d.select<Entry[]>('SELECT * FROM entries WHERE id = $1 LIMIT 1', [id]);
+  return rows[0] ?? null;
+}
+
 export async function getAllEntries(stageId?: string): Promise<Entry[]> {
   const d = await getDb();
   const where = stageId ? 'WHERE stage_id = $1' : '';

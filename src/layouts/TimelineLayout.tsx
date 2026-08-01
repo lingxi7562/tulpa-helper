@@ -108,7 +108,7 @@ export default function TimelineLayout() {
                 key={entry.id}
                 ref={(node) => virtualizer.measureElement(node)}
                 data-index={virtualItem.index}
-                className="absolute left-0 top-0 w-full"
+                className="group absolute left-0 top-0 w-full"
                 style={{ transform: `translateY(${virtualItem.start}px)` }}
               >
                 <span className={`absolute -left-[34px] top-6 h-3.5 w-3.5 rounded-full border-[3px] border-white shadow-[0_0_0_3px_#FDFBF7] sm:-left-[47px] ${stage?.color || 'bg-brand-400'}`} />
@@ -131,8 +131,8 @@ export default function TimelineLayout() {
                         </div>
                       ) : (
                         <>
-                          <IconButton label="编辑记录" icon="✎" size="sm" onClick={(e) => { e.stopPropagation(); startEdit(entry.id); }} disabled={savingEdit} className="!h-7 !w-7 !text-[10px] opacity-60 sm:opacity-0 sm:group-hover:opacity-100" />
-                          <IconButton label="删除记录" icon="×" size="sm" onClick={(e) => { e.stopPropagation(); startDelete(entry.id); }} disabled={savingEdit} className="!h-7 !w-7 !text-[10px] opacity-60 sm:opacity-0 sm:group-hover:opacity-100" />
+                          <IconButton label="编辑记录" icon="✎" size="sm" onClick={(e) => { e.stopPropagation(); startEdit(entry.id); }} disabled={savingEdit} className="!h-7 !w-7 !text-[10px] opacity-60 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100" />
+                          <IconButton label="删除记录" icon="×" size="sm" onClick={(e) => { e.stopPropagation(); startDelete(entry.id); }} disabled={savingEdit} className="!h-7 !w-7 !text-[10px] opacity-60 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100" />
                         </>
                       )}
                     </div>

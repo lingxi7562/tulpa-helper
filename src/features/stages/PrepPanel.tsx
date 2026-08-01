@@ -11,11 +11,6 @@ import CommitmentConfirm from '../journal/CommitmentConfirm';
 import Input from '../../components/ui/Input';
 import { useProfileStore } from '../../stores/useProfileStore';
 
-const PREP_SESSION_TYPES = [
-  { label: '蓝图设计', value: 'design' },
-  { label: '日常交流 (Narration)', value: 'narration' },
-];
-
 export default function PrepPanel() {
   const { loadTraits } = useTraitStore();
   const tulpaName = useProfileStore(state => state.tulpaName);
@@ -29,7 +24,7 @@ export default function PrepPanel() {
         <div className="relative flex items-center gap-4"><span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-2xl shadow-[0_10px_24px_rgba(16,185,129,.14)]">{STAGES.prep.icon}</span><div><Badge variant="prep">CHAPTER 01</Badge><h1 className="mt-3 text-2xl font-black tracking-tight text-brand-900 sm:text-3xl">{STAGES.prep.name}</h1><p className="mt-1 text-sm leading-6 text-brand-500">定义蓝图，让一段珍贵的关系从想象中萌芽。</p></div></div>
       </Card>
       <CommitmentConfirm />
-      <FocusTimer sessionTypes={PREP_SESSION_TYPES} />
+      <FocusTimer />
       <Card hoverable={false}>
         <h3 className="font-black text-brand-900">Ta 的名字</h3>
         <p className="mb-4 mt-1 text-xs leading-6 text-brand-400">这个名字会用于对话记录中的发言标记。</p>

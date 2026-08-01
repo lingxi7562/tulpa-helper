@@ -9,6 +9,7 @@ import { useToast } from './hooks/useToast';
 import MilestoneCelebrate from './features/stats/MilestoneCelebrate';
 import { useMilestoneStore } from './stores/useMilestoneStore';
 import QuickNarration from './features/narration/QuickNarration';
+import TimerController from './features/forcing/TimerController';
 
 type ViewMode = 'panel' | 'timeline';
 
@@ -35,22 +36,25 @@ function App() {
       <div className="app-surface grid h-dvh grid-rows-[72px_minmax(0,1fr)] overflow-hidden">
         <header className="relative z-50 flex h-[72px] items-center justify-between border-b border-brand-200/75 bg-[#fdfbf7]/85 px-4 shadow-[0_8px_28px_rgba(63,57,49,.045)] backdrop-blur-xl sm:px-7">
           <Brand />
-          {!showStats && (
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4">
+            {!showStats && (
+              <>
               <div className="flex items-center rounded-full border border-brand-200 bg-brand-100/75 p-1 shadow-inner">
                 <Button variant={view === 'panel' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('panel')} className={view === 'panel' ? 'border-white bg-white' : ''}>◫ <span className="hidden sm:inline">面板</span></Button>
                 <Button variant={view === 'timeline' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('timeline')} className={view === 'timeline' ? 'border-white bg-white' : ''}>⌁ <span className="hidden sm:inline">时间线</span></Button>
               </div>
               <QuickNarration />
-              <FocusTimer compact />
-            </div>
-          )}
-          {showStats && <span className="rounded-full bg-brand-100 px-3 py-1.5 text-[11px] font-bold text-brand-500">时间统计</span>}
+              </>
+            )}
+            {showStats && <span className="hidden rounded-full bg-brand-100 px-3 py-1.5 text-[11px] font-bold text-brand-500 sm:inline">时间统计</span>}
+            <FocusTimer compact />
+          </div>
         </header>
         <div className="relative z-10 min-h-0 overflow-hidden">
           {showStats ? <StatsPanel onClose={() => setShowStats(false)} /> : view === 'panel' ? <PanelLayout onOpenStats={() => setShowStats(true)} /> : <TimelineLayout />}
         </div>
       </div>
+      <TimerController />
       {message && <Toast message={message} onClose={hide} />}
       {celebrationLevel !== null && (
         <MilestoneCelebrate level={celebrationLevel} onClose={dismissCelebration} />
