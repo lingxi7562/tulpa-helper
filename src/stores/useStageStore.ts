@@ -12,42 +12,37 @@ interface StageState {
   lock: (id: string) => Promise<void>;
 }
 
-export const useStageStore = create<StageState>((set, get) => ({
-  stages: [],
-  activeStageId: 'prep',
-  loading: false,
-  loadStages: async () => {
+export const useStageStore = create<StageState>((set, get) => {
+  // 私有 helper：执行锁定状态变更后重载阶段（原始 unlock/lock 行为：catch 不 rethrow）
+  const setStageLocked = async (fn: () => Promise<void>) => {
     set({ loading: true });
     try {
-      const rows = await getStages();
-      set({ stages: rows });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-  setActiveStage: (id) => set({ activeStageId: id }),
-  unlock: async (id) => {
-    set({ loading: true });
-    try {
-      await unlockStage(id);
+      await fn();
       await get().loadStages();
     } catch (error) {
       console.error(error);
     } finally {
       set({ loading: false });
     }
-  },
-  lock: async (id) => {
-    set({ loading: true });
-    try {
-      await lockStage(id);
-      await get().loadStages();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-}));
+  };
+
+  return {
+    stages: [],
+    activeStageId: 'prep',
+    loading: false,
+    loadStages: async () => {
+      set({ loading: true });
+      try {
+        const rows = await getStages();
+        set({ stages: rows });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        set({ loading: false });
+      }
+    },
+    setActiveStage: (id) => set({ activeStageId: id }),
+    unlock: async (id) => setStageLocked(() => unlockStage(id)),
+    lock: async (id) => setStageLocked(() => lockStage(id)),
+  };
+});

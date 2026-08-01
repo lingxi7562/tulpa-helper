@@ -11,24 +11,12 @@ interface FormState {
   deleteFormDetail: (id: number) => Promise<void>;
 }
 
-export const useFormStore = create<FormState>((set) => ({
-  formDetails: [],
-  loading: false,
-  loadFormDetails: async () => {
+export const useFormStore = create<FormState>((set) => {
+  // 私有 helper：执行写操作后全量重载（与原始 save/update/delete 行为一致，含 rethrow）
+  const mutate = async (fn: () => Promise<void>) => {
     set({ loading: true });
     try {
-      const rows = await getFormDetails() as FormDetail[];
-      set({ formDetails: rows });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-  saveFormDetail: async (sense_type, description) => {
-    set({ loading: true });
-    try {
-      await createFormDetail(sense_type, description);
+      await fn();
       const rows = await getFormDetails() as FormDetail[];
       set({ formDetails: rows });
     } catch (error) {
@@ -37,31 +25,24 @@ export const useFormStore = create<FormState>((set) => ({
     } finally {
       set({ loading: false });
     }
-  },
-  updateFormDetail: async (id, description) => {
-    set({ loading: true });
-    try {
-      await updateFormDetail(id, description);
-      const rows = await getFormDetails() as FormDetail[];
-      set({ formDetails: rows });
-    } catch (error) {
-      console.error(error);
-      throw error;
-    } finally {
-      set({ loading: false });
-    }
-  },
-  deleteFormDetail: async (id) => {
-    set({ loading: true });
-    try {
-      await deleteFormDetail(id);
-      const rows = await getFormDetails() as FormDetail[];
-      set({ formDetails: rows });
-    } catch (error) {
-      console.error(error);
-      throw error;
-    } finally {
-      set({ loading: false });
-    }
-  },
-}));
+  };
+
+  return {
+    formDetails: [],
+    loading: false,
+    loadFormDetails: async () => {
+      set({ loading: true });
+      try {
+        const rows = await getFormDetails() as FormDetail[];
+        set({ formDetails: rows });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        set({ loading: false });
+      }
+    },
+    saveFormDetail: async (sense_type, description) => mutate(() => createFormDetail(sense_type, description)),
+    updateFormDetail: async (id, description) => mutate(() => updateFormDetail(id, description)),
+    deleteFormDetail: async (id) => mutate(() => deleteFormDetail(id)),
+  };
+});

@@ -130,17 +130,22 @@ export async function createTrait(trait: { name: string; description?: string; w
   );
 }
 
-export async function deleteTrait(id: number) {
+// === 私有 helper：删除记录并级联清理其 deviations（事务） ===
+async function deleteWithDeviations(targetType: DeviationTargetType, table: 'traits' | 'form_details', id: number) {
   const d = await getDb();
   await d.execute('BEGIN');
   try {
-    await d.execute("DELETE FROM deviations WHERE target_type = 'trait' AND target_id = $1", [id]);
-    await d.execute('DELETE FROM traits WHERE id = $1', [id]);
+    await d.execute('DELETE FROM deviations WHERE target_type = $1 AND target_id = $2', [targetType, id]);
+    await d.execute(`DELETE FROM ${table} WHERE id = $1`, [id]);
     await d.execute('COMMIT');
   } catch (error) {
     try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
     throw error;
   }
+}
+
+export async function deleteTrait(id: number) {
+  await deleteWithDeviations('trait', 'traits', id);
 }
 
 export async function updateTrait(id: number, fields: { name?: string; description?: string; weight?: number; category?: string }) {
@@ -232,16 +237,7 @@ export async function updateFormDetail(id: number, description: string) {
 }
 
 export async function deleteFormDetail(id: number) {
-  const d = await getDb();
-  await d.execute('BEGIN');
-  try {
-    await d.execute("DELETE FROM deviations WHERE target_type = 'form' AND target_id = $1", [id]);
-    await d.execute('DELETE FROM form_details WHERE id = $1', [id]);
-    await d.execute('COMMIT');
-  } catch (error) {
-    try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
-    throw error;
-  }
+  await deleteWithDeviations('form', 'form_details', id);
 }
 
 // === CRUD：健康的偏离 / 演化记录 ===
