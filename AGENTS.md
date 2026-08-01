@@ -44,9 +44,9 @@ These are hard-won lessons from debugging the `.github/workflows/build.yml` Andr
 - Always include `--apk` in the build command.
 
 ### 3. `tauri android init --ci` is required on fresh CI
-- `src-tauri/gen/android/` is **not committed** to the repo.
-- On a clean CI clone, `tauri android build` will fail because the Android project scaffold doesn't exist.
-- Always run `npx tauri android init --ci` before `tauri android build` in CI.
+- `src-tauri/gen/android/` **was** not committed historically; it is now tracked (committed in 065ee01, updated in 0b24d41). Keep this lesson for rollbacks/older branches.
+- On a clean CI clone, `tauri android build` will fail if the Android project scaffold doesn't exist.
+- Always run `npx tauri android init --ci` before `tauri android build` in CI (harmless when the scaffold is already present).
 
 ### 4. NDK version: exact sdkmanager string required
 - The README says "NDK 26.1" but sdkmanager requires the full version string.
@@ -132,7 +132,7 @@ Feature panels are in `src/features/stages/`, each consuming the same reusable `
 Default 25 minutes. `timeLeft` is in seconds. Each stage sets a different default `sessionType` (EntryType). Timer completion creates an `entries` row with `duration_seconds`.
 
 ### Entry types
-Defined in `src/db/schema.ts`: `'trait' | 'form' | 'session' | 'narration' | 'devotion' | 'dialogue' | 'wonderland' | 'signal' | 'imposition' | 'switch' | 'design' | 'dialogue_session' | 'practice'`
+Defined in `src/db/schema.ts`: `'trait' | 'form' | 'session' | 'narration' | 'devotion' | 'dialogue' | 'wonderland' | 'signal' | 'imposition' | 'switch' | 'design' | 'dialogue_session' | 'practice' | 'autonomy' | 'resonance'` (15 types — keep in sync with schema.ts)
 
 ### Two views
 - **Panel** (`PanelLayout`) — sidebar stage nav + content area, default view
