@@ -3,18 +3,96 @@ name: Build & Release
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  JAVA_VERSION: "21"
+  ANDROID_API: "36"
+  ANDROID_BUILD_TOOLS: "35.0.0"
+  ANDROID_NDK_VERSION: "26.1.10909125"
+
 jobs:
+  source-quality:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject tracked runtime and ignored files
+        shell: bash
+        run: |
+          ignored="$(git ls-files -ci --exclude-standard)"
+          if [ -n "$ignored" ]; then
+            echo "Tracked files are hidden by .gitignore:"
+            echo "$ignored"
+            exit 1
+          fi
+          if git ls-files --error-unmatch .superpowers >/dev/null 2>&1; then
+            echo ".superpowers runtime state must never be tracked"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Verify configuration parity
+        run: node .github/scripts/verify-config.mjs
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Setup Rust formatter
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install Linux system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+
+      - name: Lint Rust
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - name: Test Rust
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
   build-windows:
+    needs: source-quality
     runs-on: windows-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install frontend dependencies
         run: npm ci
@@ -25,10 +103,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri/target
-
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli
+          workspaces: src-tauri -> target
 
       - name: Build
         run: npm run tauri build
@@ -38,24 +113,32 @@ jobs:
         run: |
           $exe = "src-tauri/target/release/tulpa-helper.exe"
           if (-not (Test-Path $exe)) { Write-Error "Binary not found: $exe"; exit 1 }
+          $bundles = @(Get-ChildItem -Path "src-tauri/target/release/bundle" -Recurse -File -ErrorAction SilentlyContinue)
+          if ($bundles.Count -eq 0) { Write-Error "No native Windows bundle was produced"; exit 1 }
           Compress-Archive -Path $exe -DestinationPath tulpa-helper-windows.zip
-          Write-Output "tulpa-helper-windows.zip ($((Get-Item tulpa-helper-windows.zip).Length) bytes)"
 
-      - name: Upload portable ZIP
+      - name: Upload Windows bundles
         uses: actions/upload-artifact@v4
         with:
           name: tulpa-helper-windows
-          path: tulpa-helper-windows.zip
+          path: |
+            tulpa-helper-windows.zip
+            src-tauri/target/release/bundle/**/*
+          if-no-files-found: error
+          retention-days: 14
 
   build-linux:
-    runs-on: ubuntu-latest
+    needs: source-quality
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install frontend dependencies
         run: npm ci
@@ -71,35 +154,43 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri/target
-
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli
+          workspaces: src-tauri -> target
 
       - name: Build
         run: npm run tauri build
 
       - name: Package portable tar.gz
         run: |
+          bundle="$(find src-tauri/target/release/bundle -type f -print -quit 2>/dev/null)"
+          if [ -z "$bundle" ]; then
+            echo "No native Linux bundle was produced"
+            exit 1
+          fi
           cp src-tauri/target/release/tulpa-helper .
           tar czf tulpa-helper-linux.tar.gz tulpa-helper
-          ls -lh tulpa-helper-linux.tar.gz
 
-      - name: Upload portable tar.gz
+      - name: Upload Linux bundles
         uses: actions/upload-artifact@v4
         with:
           name: tulpa-helper-linux
-          path: tulpa-helper-linux.tar.gz
+          path: |
+            tulpa-helper-linux.tar.gz
+            src-tauri/target/release/bundle/**/*
+          if-no-files-found: error
+          retention-days: 14
 
   build-android:
-    runs-on: ubuntu-latest
+    needs: source-quality
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Install frontend dependencies
         run: npm ci
@@ -107,8 +198,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -118,25 +209,25 @@ jobs:
       - name: Install NDK and SDK components
         run: |
           sdkmanager --install \
-            "ndk;26.1.10909125" \
-            "platforms;android-34" \
-            "build-tools;34.0.0"
+            "ndk;${ANDROID_NDK_VERSION}" \
+            "platforms;android-${ANDROID_API}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}"
 
       - name: Configure Android env
         run: |
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> "$GITHUB_ENV"
-          echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}" >> "$GITHUB_ENV"
           echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
 
-      - name: Setup Rust with Android targets
+      - name: Setup Rust with Android target
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+          targets: aarch64-linux-android
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri/target
+          workspaces: src-tauri -> target
 
       - name: Init Android project
         run: npx tauri android init --ci
@@ -150,3 +241,4 @@ jobs:
           name: tulpa-helper-android
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
+          retention-days: 14

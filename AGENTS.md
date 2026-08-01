@@ -8,7 +8,7 @@ A Tauri v2 desktop app (React 19 + TypeScript + Tailwind CSS v4 + Zustand + SQLi
 npm install                  # install deps (Node ≥22, Rust required)
 npm run tauri dev            # dev mode with hot reload (Vite port 1420, fixed)
 npm run tauri build          # production desktop build
-npm run tauri android build -- --target aarch64  # Android APK (JDK 21 + SDK 34 + NDK 26.1)
+npm run tauri android build -- --apk --debug --target aarch64  # installable debug APK (JDK 21 + SDK 36 + NDK 26.1)
 ```
 
 Do NOT run `npm run dev` or `npm run build` standalone — use `npm run tauri dev` / `npm run tauri build`. The Tauri CLI orchestrates Vite; `npm run build` (`tsc && vite build`) is only invoked internally by `tauri build`.
@@ -17,13 +17,13 @@ Do NOT run `npm run dev` or `npm run build` standalone — use `npm run tauri de
 
 | Concern | Detail |
 |---|---|
-| React | **v19** (not 18 as the dev docs say — README is stale; trust `package.json`) |
+| React | **v19**. Treat `package.json` as the dependency-version source of truth. |
 | Tailwind | **v4**. Uses `@tailwindcss/vite` plugin (NOT legacy PostCSS-only pipeline). The `tailwind.config.js` only extends brand/stage colors; primary config lives in `src/App.css` via `@theme` and CSS custom properties. |
 | Vite | v7, port 1420, `strictPort: true`. `@tailwindcss/vite` plugin imported from `@tailwindcss/vite`. |
 | Tauri | v2. CSP is `null` (permissive). Capabilities in `src-tauri/capabilities/default.json`. |
 | State | Zustand v5. Each store lives in `src/stores/` and calls `src/db/database.ts` directly. |
 | DB | SQLite via `tauri-plugin-sql`. Auto-created as `tulpa.db` on first load. No migration tool — schema lives in `src/db/schema.ts` `MIGRATIONS` array and runs on `getDb()`. |
-| Build | `tsc && vite build` inside Tauri — typecheck runs before bundling. No lint or test framework configured. |
+| Build | `tsc && vite build` inside Tauri. GitHub Actions also enforces config parity, Rust formatting, Clippy and Rust tests before packaging. No frontend lint/test framework is configured yet. |
 
 ## CI / Android Build Pitfalls
 
@@ -49,10 +49,11 @@ These are hard-won lessons from debugging the `.github/workflows/build.yml` Andr
 - Always run `npx tauri android init --ci` before `tauri android build` in CI (harmless when the scaffold is already present).
 
 ### 4. NDK version: exact sdkmanager string required
-- The README says "NDK 26.1" but sdkmanager requires the full version string.
+- Human-facing docs may abbreviate this as "NDK 26.1", but sdkmanager requires the full version string.
 - **Correct:** `ndk;26.1.10909125` ✅
 - **Wrong:** `ndk;26.1.10929125` ❌ (one digit off — sdkmanager can't find it)
 - Always verify the exact version string before using it. The version numbers are brittle.
+- The tracked Android scaffold currently uses compile/target SDK 36 with AGP 8.11; CI installs `platforms;android-36` and Build Tools 35.0.0 to match it.
 
 ### 5. Both NDK_HOME and ANDROID_NDK_HOME must be set
 - `NDK_HOME` → used by Rust/Cargo cross-compilation linkers.

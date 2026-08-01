@@ -126,7 +126,7 @@ Button / Card / Input / Badge / IconButton / Toast / Heatmap / EntryForm — 均
 - **/T 对话解析**:`lib/dialogue.ts` 的 parseDialogueText 按 `/T`(含 `/t`、`\n/T`)拆分,存 `dialogue_messages`
 - **番茄钟**:默认 25 分钟,`timeLeft` 秒级;完成 → 创建 `entries` 行(含 duration_seconds)
 - **文件放置规则**:阶段特性 → `features/stages/<Stage>Panel.tsx`;跨模块 → `features/<domain>/`;UI 基元 → `components/ui/`;新表 → schema.ts MIGRATIONS + database.ts CRUD;全局状态 → `stores/use<Thing>Store.ts`
-- **构建**:不用裸 `npm run dev/build`,必须走 `tauri dev/build`;无 lint/测试框架,`tsc` 是唯一检查
+- **构建**:不用裸 `npm run dev/build`,必须走 `tauri dev/build`;GitHub Actions 门禁包含配置一致性、TypeScript 类型检查、Rustfmt、Clippy 与 Rust 测试，尚无前端 lint/测试框架
 
 ## 文档与变更历史
 
