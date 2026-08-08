@@ -66,7 +66,7 @@ UI (React 组件)
 | Store | 职责 |
 |---|---|
 | `useStageStore` | 当前/解锁阶段:loadStages / setActiveStage / unlock / lock |
-| `useEntryStore` | 记录 CRUD + 搜索 + 分页(200/页,append 模式) |
+| `useEntryStore` | 记录 CRUD + 搜索 + 分页(200/页,append 模式) + 加载错误重试 |
 | `useTraitStore` | 特质 CRUD(name/description/weight/category) |
 | `useTimerStore` | 番茄钟:start / pause / reset / tick / setSessionType / setDurationMinutes |
 | `useFormStore` | 五感形态 CRUD |

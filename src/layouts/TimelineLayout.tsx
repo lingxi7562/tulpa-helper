@@ -6,13 +6,14 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import IconButton from '../components/ui/IconButton';
 import EntryForm from '../components/ui/EntryForm';
+import Button from '../components/ui/Button';
 
 const TYPE_ICONS: Record<string, string> = { session: '⏱️', narration: '🗣️', dialogue: '💬', trait: '🧬', signal: '⚡', design: '🎨', dialogue_session: '💬', practice: '✍️', imposition: '👁', switch: '🔄', autonomy: '🧠', resonance: '💗', wonderland: '🏡', devotion: '📜' };
 const PAGE_SIZE = 200;
 const LOAD_MORE_THRESHOLD = 600;
 
 export default function TimelineLayout() {
-  const { entries, totalEntries, loadEntries, loading, removeEntry, updateEntry } = useEntryStore();
+  const { entries, totalEntries, loadEntries, loading, loadError, removeEntry, updateEntry } = useEntryStore();
   const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -80,6 +81,15 @@ export default function TimelineLayout() {
     });
   };
 
+  const handleRetry = () => {
+    const append = entries.length > 0 && entries.length < totalEntries;
+    const token = ++loadingTokenRef.current;
+    loadingPageRef.current = true;
+    loadEntries(undefined, PAGE_SIZE, append ? entries.length : 0, append, searchQuery).finally(() => {
+      if (token === loadingTokenRef.current) loadingPageRef.current = false;
+    });
+  };
+
   const virtualizer = useVirtualizer({
     count: entries.length,
     getScrollElement: () => scrollRef.current,
@@ -89,7 +99,7 @@ export default function TimelineLayout() {
   });
 
   return (
-    <main ref={scrollRef} onScroll={handleScroll} className="relative z-10 h-full overflow-y-auto overscroll-contain">
+    <main ref={scrollRef} onScroll={handleScroll} aria-busy={loading} className="relative z-10 h-full overflow-y-auto overscroll-contain">
       <div className="mx-auto max-w-4xl px-4 py-9 sm:px-8 sm:py-12">
         <header className="mb-10 animate-[pageEnter_.45s_var(--ease)_both]"><p className="eyebrow">Our Story</p><h1 className="mt-3 text-3xl font-black tracking-tight text-brand-900">共同走过的时光</h1><p className="mt-2 text-sm leading-6 text-brand-500">每一次专注、每一句对话，都在这里留下温度。</p></header>
 
@@ -110,7 +120,20 @@ export default function TimelineLayout() {
           {searchQuery && <span className="text-[10px] font-bold text-brand-400">找到 {totalEntries} 条</span>}
         </div>
 
-        {!entries.length && !loading && (
+        {loadError && !loading && (
+          <Card hoverable={false} className="mb-5 border-red-200/70 bg-red-50/50">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p role="alert" className="text-sm font-semibold text-red-600">记录加载失败，数据仍保留在本地。请重试。</p>
+              <Button size="sm" variant="secondary" onClick={handleRetry}>重试</Button>
+            </div>
+          </Card>
+        )}
+
+        {!entries.length && loading && (
+          <Card hoverable={false}><p className="text-sm text-brand-400">正在整理本地记录…</p></Card>
+        )}
+
+        {!entries.length && !loading && !loadError && (
           <Card><p className="text-sm text-brand-400">{searchQuery ? `没有找到包含“${searchQuery}”的记录。` : '旅程还很安静。完成一次专注后，故事会从这里开始。'}</p></Card>
         )}
 

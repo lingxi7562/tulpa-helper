@@ -9,6 +9,7 @@ interface EntryState {
   queryStageId: string | null;
   searchQuery: string;
   loading: boolean;
+  loadError: boolean;
   loadEntries: (stageId?: string, limit?: number, offset?: number, append?: boolean, searchQuery?: string) => Promise<void>;
   addEntry: (e: { stage_id: string; type: EntryType; title: string; content?: string; tags?: string; duration_seconds?: number; mood?: number }) => Promise<number>;
   removeEntry: (id: number) => Promise<void>;
@@ -29,11 +30,13 @@ export const useEntryStore = create<EntryState>((set) => ({
   queryStageId: null,
   searchQuery: '',
   loading: false,
+  loadError: false,
   loadEntries: async (stageId, limit = 50, offset = 0, append = false, searchQuery = '') => {
     const requestId = ++latestLoadRequest;
     const normalizedQuery = searchQuery.trim().slice(0, 120);
     set((state) => ({
       loading: true,
+      loadError: false,
       entries: append ? state.entries : [],
       totalEntries: append ? state.totalEntries : 0,
     }));
@@ -48,10 +51,14 @@ export const useEntryStore = create<EntryState>((set) => ({
         totalEntries,
         queryStageId: append ? s.queryStageId : (stageId ?? null),
         searchQuery: append ? s.searchQuery : normalizedQuery,
+        loadError: false,
         revision: s.revision + 1,
       }));
     } catch (error) {
-      if (requestId === latestLoadRequest) console.error(error);
+      if (requestId === latestLoadRequest) {
+        console.error(error);
+        set({ loadError: true });
+      }
     } finally {
       if (requestId === latestLoadRequest) set({ loading: false });
     }

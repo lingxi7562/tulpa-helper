@@ -11,14 +11,17 @@ import BackupPanel from '../data/BackupPanel';
 interface Props { onClose: () => void; }
 
 export default function StatsPanel({ onClose }: Props) {
-  const { totalSeconds, stageBreakdown, dailyDurations, heatmapData, consecutiveDays, loading, error } = useStats();
+  const { totalSeconds, stageBreakdown, dailyDurations, heatmapData, consecutiveDays, loading, error, refresh } = useStats();
   if (loading) return <main className="grid h-full place-items-center"><div className="flex items-center gap-3 text-sm font-semibold text-brand-400"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />正在整理共同的时光…</div></main>;
   return (
     <main className="h-full overflow-y-auto overscroll-contain">
       <div className="panel-page space-y-5">
         {error && (
           <Card hoverable={false} className="border-red-200/70 bg-red-50/40">
-            <p className="text-xs font-bold text-red-500">统计数据加载失败，请稍后重试。</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p role="alert" className="text-xs font-bold text-red-500">统计数据加载失败，请稍后重试。</p>
+              <Button size="sm" variant="secondary" onClick={refresh}>重试</Button>
+            </div>
           </Card>
         )}
         <header className="mb-8 flex items-end justify-between gap-4"><div><p className="eyebrow">Quiet Progress</p><h1 className="mt-3 text-3xl font-black tracking-tight text-brand-900">时间的温柔回响</h1><p className="mt-2 text-sm text-brand-500">不追赶数字，只看见每一次认真相伴。</p></div><Button variant="secondary" onClick={onClose} icon="←">返回</Button></header>
