@@ -93,6 +93,7 @@ export default function ResonanceTracker() {
       await load();
     } catch (error) {
       console.error(error);
+      showToast('共振记录保存失败，请重试');
     } finally {
       setSaving(false);
     }
