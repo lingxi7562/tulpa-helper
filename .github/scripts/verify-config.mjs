@@ -32,6 +32,9 @@ expectEqual('package.json and Cargo.toml versions', packageJson.version, cargoVe
 if (tauriConfig.bundle?.active !== true) {
   throw new Error('Tauri bundling must remain enabled');
 }
+if (!tauriConfig.plugins?.sql?.preload?.includes('sqlite:tulpa.db')) {
+  throw new Error('SQLite must be preloaded so versioned migrations run before the first query');
+}
 const bundleTargets = tauriConfig.bundle.targets;
 if (bundleTargets !== 'all' && (!Array.isArray(bundleTargets) || bundleTargets.length === 0)) {
   throw new Error('Tauri bundle.targets must be "all" or a non-empty target list');

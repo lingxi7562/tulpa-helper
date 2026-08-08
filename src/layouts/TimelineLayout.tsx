@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useEntryStore } from '../stores/useEntryStore';
-import { updateDialogueMessages } from '../db/database';
-import { parseDialogueText } from '../lib/dialogue';
 import { STAGES } from '../constants/stages';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -42,12 +40,7 @@ export default function TimelineLayout() {
     if (editingId === null) return;
     setSavingEdit(true);
     try {
-      const entry = entries.find(e => e.id === editingId);
       await updateEntry(editingId, { title, content });
-      // 编辑 dialogue 条目时重新解析对话消息，避免拆分结果永久错误
-      if (entry?.type === 'dialogue') {
-        await updateDialogueMessages(editingId, parseDialogueText(content));
-      }
       setEditingId(null);
     } catch (error) {
       console.error(error);

@@ -12,7 +12,7 @@
 |---|---|
 | 桌面 | Tauri v2(Rust + WebView)+ Tauri Mobile(Android) |
 | 前端 | React 19 + TypeScript + Tailwind CSS v4 + Zustand v5 |
-| 存储 | SQLite via tauri-plugin-sql(`tulpa.db`,无迁移工具,`MIGRATIONS` 数组启动时执行) |
+| 存储 | SQLite via tauri-plugin-sql(`tulpa.db`)，Rust 版本化迁移位于 `src-tauri/migrations/`，启动预加载后再查询 |
 | 构建 | `npm run tauri dev` / `npm run tauri build`(Vite port 1420 固定)· CI: GitHub Actions 三平台 |
 
 源码规模:51 文件 / ~4300 行(`src/`,ts/tsx/css)。Features 地图、Stores、UI 基元已逐一核对,零缺失。
@@ -23,7 +23,7 @@
 UI (React 组件)
   → Zustand stores (src/stores/*)    — 状态 + 副作用
     → DB CRUD (src/db/database.ts)   — SQLite via tauri-plugin-sql
-      → Schema (src/db/schema.ts)    — 建表 SQL + TS 类型 + MIGRATIONS
+      → Schema (src/db/schema.ts)    — TypeScript 类型；SQL 迁移位于 `src-tauri/migrations/`
 ```
 
 图谱分层的实测出入度(方向为"被谁依赖/依赖谁"):
@@ -123,9 +123,9 @@ Button / Card / Input / Badge / IconButton / Toast / Heatmap / EntryForm — 均
 ## 关键约定
 
 - **CSS 双层**:Tailwind 管布局 + App.css 的 `ui-*` 类管设计令牌(colors/radii/shadows/durations/easing 定义在 `:root`)
-- **/T 对话解析**:`lib/dialogue.ts` 的 parseDialogueText 按 `/T`(含 `/t`、`\n/T`)拆分,存 `dialogue_messages`
+- **/T 对话解析**:`lib/dialogue.ts` 的 parseDialogueText 按 `/T`(含 `/t`、`\n/T`)拆分；对话正文存于 `entries.content`，旧 `dialogue_messages` 仅作兼容读取
 - **番茄钟**:默认 25 分钟,`timeLeft` 秒级;完成 → 创建 `entries` 行(含 duration_seconds)
-- **文件放置规则**:阶段特性 → `features/stages/<Stage>Panel.tsx`;跨模块 → `features/<domain>/`;UI 基元 → `components/ui/`;新表 → schema.ts MIGRATIONS + database.ts CRUD;全局状态 → `stores/use<Thing>Store.ts`
+- **文件放置规则**:阶段特性 → `features/stages/<Stage>Panel.tsx`;跨模块 → `features/<domain>/`;UI 基元 → `components/ui/`;新表 → `src-tauri/migrations/NNNN_description.sql` + `src-tauri/src/migrations.rs` + `database.ts` CRUD;全局状态 → `stores/use<Thing>Store.ts`
 - **构建**:不用裸 `npm run dev/build`,必须走 `tauri dev/build`;GitHub Actions 门禁包含配置一致性、TypeScript 类型检查、Rustfmt、Clippy 与 Rust 测试，尚无前端 lint/测试框架
 
 ## 文档与变更历史

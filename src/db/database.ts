@@ -1,8 +1,8 @@
 import Database from '@tauri-apps/plugin-sql';
-import { MIGRATIONS, type Deviation, type DeviationTargetType, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
+import { type Deviation, type DeviationTargetType, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
 import { localDateKey, shiftLocalDate } from '../lib/date';
 
-let db: Database | null = null;
+let dbPromise: Promise<Database> | undefined;
 const MAX_PAGE_SIZE = 500;
 
 function normalizeLimit(value: number, fallback: number): number {
@@ -21,14 +21,15 @@ function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, character => `\\${character}`);
 }
 
-export async function getDb(): Promise<Database> {
-  if (!db) {
-    db = await Database.load('sqlite:tulpa.db');
-    for (const sql of MIGRATIONS) {
-      await db.execute(sql);
-    }
+export function getDb(): Promise<Database> {
+  if (!dbPromise) {
+    dbPromise = Database.load('sqlite:tulpa.db').catch(error => {
+      // Allow a later user action to retry after a transient startup failure.
+      dbPromise = undefined;
+      throw error;
+    });
   }
-  return db;
+  return dbPromise;
 }
 
 // === CRUD：stages ===
@@ -172,21 +173,14 @@ export async function createTrait(trait: { name: string; description?: string; w
 }
 
 // === 私有 helper：删除记录并级联清理其 deviations（事务） ===
-async function deleteWithDeviations(targetType: DeviationTargetType, table: 'traits' | 'form_details', id: number) {
+async function deleteWithDeviations(table: 'traits' | 'form_details', id: number) {
   const d = await getDb();
-  await d.execute('BEGIN');
-  try {
-    await d.execute('DELETE FROM deviations WHERE target_type = $1 AND target_id = $2', [targetType, id]);
-    await d.execute(`DELETE FROM ${table} WHERE id = $1`, [id]);
-    await d.execute('COMMIT');
-  } catch (error) {
-    try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
-    throw error;
-  }
+  // The migration-installed trigger removes related deviations atomically.
+  await d.execute(`DELETE FROM ${table} WHERE id = $1`, [id]);
 }
 
 export async function deleteTrait(id: number) {
-  await deleteWithDeviations('trait', 'traits', id);
+  await deleteWithDeviations('traits', id);
 }
 
 export async function updateTrait(id: number, fields: { name?: string; description?: string; weight?: number; category?: string }) {
@@ -209,30 +203,15 @@ export async function updateTrait(id: number, fields: { name?: string; descripti
 export async function createDialogueEntry(params: {
   stage_id: string;
   text: string;
-  messages: { speaker: Speaker; content: string }[];
 }) {
   const d = await getDb();
-  await d.execute('BEGIN');
-  try {
-    const result = await d.execute(
-      `INSERT INTO entries (stage_id, type, title, content, tags, duration_seconds, mood)
-       VALUES ($1, 'dialogue', $2, $3, '[]', 0, NULL)`,
-       [params.stage_id, Array.from(params.text).slice(0, 50).join(''), params.text]
-    );
-    const entryId = result.lastInsertId as number;
-    for (let i = 0; i < params.messages.length; i++) {
-      const msg = params.messages[i];
-      await d.execute(
-        'INSERT INTO dialogue_messages (entry_id, speaker, content, seq) VALUES ($1, $2, $3, $4)',
-        [entryId, msg.speaker, msg.content, i]
-      );
-    }
-    await d.execute('COMMIT');
-    return entryId;
-  } catch (e) {
-    try { await d.execute('ROLLBACK'); } catch { /* rollback failure should not mask original error */ }
-    throw e;
-  }
+  const text = params.text.trim();
+  const result = await d.execute(
+    `INSERT INTO entries (stage_id, type, title, content, tags, duration_seconds, mood)
+     VALUES ($1, 'dialogue', $2, $3, '[]', 0, NULL)`,
+    [params.stage_id, Array.from(text).slice(0, 50).join(''), text]
+  );
+  return result.lastInsertId as number;
 }
 
 // === 承诺确认检测（不限条目数） ===
@@ -278,7 +257,7 @@ export async function updateFormDetail(id: number, description: string) {
 }
 
 export async function deleteFormDetail(id: number) {
-  await deleteWithDeviations('form', 'form_details', id);
+  await deleteWithDeviations('form_details', id);
 }
 
 // === CRUD：健康的偏离 / 演化记录 ===
@@ -348,25 +327,6 @@ export async function createMilestone(stageId: string, title: string, notes: str
 export async function deleteMilestone(id: number) {
   const d = await getDb();
   await d.execute('DELETE FROM milestones WHERE id = $1', [id]);
-}
-
-// 编辑 dialogue 条目后重写其对话消息（删除旧消息按 seq 重新插入）
-export async function updateDialogueMessages(entryId: number, messages: { speaker: Speaker; content: string }[]) {
-  const d = await getDb();
-  await d.execute('BEGIN');
-  try {
-    await d.execute('DELETE FROM dialogue_messages WHERE entry_id = $1', [entryId]);
-    for (let i = 0; i < messages.length; i++) {
-      await d.execute(
-        'INSERT INTO dialogue_messages (entry_id, speaker, content, seq) VALUES ($1, $2, $3, $4)',
-        [entryId, messages[i].speaker, messages[i].content, i]
-      );
-    }
-    await d.execute('COMMIT');
-  } catch (e) {
-    try { await d.execute('ROLLBACK'); } catch { /* preserve original error */ }
-    throw e;
-  }
 }
 
 // === 统计查询 ===

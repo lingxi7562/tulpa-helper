@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS dialogue_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  entry_id INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+  speaker TEXT NOT NULL CHECK(speaker IN ('self','tulpa')),
+  content TEXT NOT NULL DEFAULT '',
+  seq INTEGER NOT NULL DEFAULT 0
+);

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getDialogueMessages } from '../../db/database';
+import { getDialogueMessages, getEntryById } from '../../db/database';
 import type { DialogueMessage } from '../../db/schema';
 import { useProfileStore } from '../../stores/useProfileStore';
+import { parseDialogueText } from '../../lib/dialogue';
 
 interface Props {
   entryId: number;
@@ -17,17 +18,28 @@ export default function DialogueDisplay({ entryId }: Props) {
     let cancelled = false;
     setLoading(true);
     setError(false);
-    getDialogueMessages(entryId)
-      .then((rows) => {
+    (async () => {
+      try {
+        const entry = await getEntryById(entryId);
+        if (entry?.content?.trim()) {
+          const parsed = parseDialogueText(entry.content).map((message, seq) => ({
+            ...message,
+            id: -(seq + 1),
+            entry_id: entryId,
+            seq,
+          }));
+          if (!cancelled) setMessages(parsed);
+          return;
+        }
+        const rows = await getDialogueMessages(entryId);
         if (!cancelled) setMessages(rows as DialogueMessage[]);
-      })
-      .catch((e) => {
+      } catch (e) {
         console.error(e);
         if (!cancelled) setError(true);
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
     return () => { cancelled = true; };
   }, [entryId]);
 

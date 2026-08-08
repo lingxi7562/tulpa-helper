@@ -64,8 +64,7 @@ export default function ScribbleInput({ onSaved }: Props) {
     if (!text.trim() || saving) return;
     setSaving(true);
     try {
-      const messages = parseDialogueText(text);
-      const entryId = await createDialogueEntry({ stage_id: activeStageId, text: text.trim(), messages });
+      const entryId = await createDialogueEntry({ stage_id: activeStageId, text: text.trim() });
       setLastEntryId(entryId);
       setRecentEntryIds(prev => [entryId, ...prev].slice(0, 5));
       setText('');
@@ -105,7 +104,7 @@ export default function ScribbleInput({ onSaved }: Props) {
       )}
       <div className="mt-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"><span className="text-[10px] leading-5 text-brand-400"><code className="rounded-md bg-brand-100 px-1.5 py-1 font-bold text-brand-700">/T</code> 之后的内容会被标记为 Tulpa 的发言，直到下一个 <code className="rounded-md bg-brand-100 px-1.5 py-1 font-bold text-brand-700">/T</code> 或文本结束</span><Button onClick={parseAndSave} disabled={!text.trim() || saving} size="sm">{saving ? '保存中…' : '保存记录'}</Button></div>
       <p className="mt-2 text-[10px] leading-5 text-brand-400">
-        💭 担心这只是自己的想象？先假定是 Ta，给信号一个机会。
+        💭 担心这只是自己的想象？先把它记下来，允许不确定，也不急着归因。
       </p>
       {recentEntryIds.length > 0 && (
         <div className="mt-4 space-y-3">

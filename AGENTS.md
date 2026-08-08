@@ -22,7 +22,7 @@ Do NOT run `npm run dev` or `npm run build` standalone — use `npm run tauri de
 | Vite | v7, port 1420, `strictPort: true`. `@tailwindcss/vite` plugin imported from `@tailwindcss/vite`. |
 | Tauri | v2. CSP is `null` (permissive). Capabilities in `src-tauri/capabilities/default.json`. |
 | State | Zustand v5. Each store lives in `src/stores/` and calls `src/db/database.ts` directly. |
-| DB | SQLite via `tauri-plugin-sql`. Auto-created as `tulpa.db` on first load. No migration tool — schema lives in `src/db/schema.ts` `MIGRATIONS` array and runs on `getDb()`. |
+| DB | SQLite via `tauri-plugin-sql`. Auto-created as `tulpa.db`; versioned Rust migrations live in `src-tauri/migrations/` and are preloaded before the first query. `src/db/schema.ts` contains TypeScript types only. |
 | Build | `tsc && vite build` inside Tauri. GitHub Actions also enforces config parity, Rust formatting, Clippy and Rust tests before packaging. No frontend lint/test framework is configured yet. |
 
 ## CI / Android Build Pitfalls
@@ -111,7 +111,7 @@ This is what `--apk --debug --target aarch64` produces.
 UI Layer (React components)
   → Zustand stores (src/stores/*)    — state + side effects
     → DB CRUD (src/db/database.ts)   — SQLite via tauri-plugin-sql
-      → Schema (src/db/schema.ts)    — tables + TypeScript types + auto-migrations
+      → Schema (src/db/schema.ts)    — TypeScript types; SQL migrations live in src-tauri/migrations/
 ```
 
 Stage-driven design. Four stages in `src/constants/stages.ts`:
@@ -127,7 +127,7 @@ Feature panels are in `src/features/stages/`, each consuming the same reusable `
 - Design tokens as CSS custom properties in `:root` (colors, radii, shadows, durations, easing).
 
 ### `/T` dialogue parsing
-`ScribbleInput` splits text at `/T` (or `/t`, or `\n/T`) to mark Tulpa messages. Lines before `/T` → speaker `'self'`, after → speaker `'tulpa'`. Stored as `dialogue_messages` linked to an `entries` row.
+`ScribbleInput` splits text at `/T` (or `/t`, or `\n/T`) to mark Tulpa messages. Lines before `/T` → speaker `'self'`, after → speaker `'tulpa'`. The canonical transcript is stored in `entries.content`; legacy `dialogue_messages` rows remain readable.
 
 ### Timer (Pomodoro)
 Default 25 minutes. `timeLeft` is in seconds. Each stage sets a different default `sessionType` (EntryType). Timer completion creates an `entries` row with `duration_seconds`.
@@ -146,6 +146,6 @@ Defined in `src/db/schema.ts`: `'trait' | 'form' | 'session' | 'narration' | 'de
 | A feature tied to a stage | `src/features/stages/<Stage>Panel.tsx` |
 | A cross-cutting feature (timer, input, etc.) | `src/features/<domain>/` |
 | A reusable UI primitive (button, card, badge) | `src/components/ui/` with `ui-` CSS classes |
-| A new DB table or query | `src/db/schema.ts` (add migration SQL) + `src/db/database.ts` (add CRUD) |
+| A new DB table or query | `src-tauri/migrations/NNNN_description.sql` + `src-tauri/src/migrations.rs` + `src/db/database.ts` (add CRUD) |
 | App-wide state | `src/stores/use<Thing>Store.ts` |
 | Stage metadata | `src/constants/stages.ts` (single source of truth) |
