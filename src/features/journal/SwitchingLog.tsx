@@ -8,23 +8,27 @@ import Badge from '../../components/ui/Badge';
 import Input from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Input';
 import type { Entry } from '../../db/schema';
+import { useToast } from '../../hooks/useToast';
 
 interface Props { onSaved?: () => void; }
 
 export default function SwitchingLog({ onSaved }: Props) {
   const { addEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
+  const showToast = useToast(state => state.show);
   const [logs, setLogs] = useState<Entry[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [duration, setDuration] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
   const load = useCallback(async () => {
+    setLoadError(false);
     try {
       const rows = await getEntriesByType(activeStageId, 'switch');
       setLogs(rows);
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error(error); setLoadError(true); }
   }, [activeStageId]);
 
   useEffect(() => { load(); }, [load]);
@@ -48,7 +52,7 @@ export default function SwitchingLog({ onSaved }: Props) {
       setNotes('');
       await load();
       onSaved?.();
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error(error); showToast('切换记录保存失败，请重试'); }
     finally { setSaving(false); }
   };
 
@@ -58,6 +62,12 @@ export default function SwitchingLog({ onSaved }: Props) {
         <div><h3 className="font-black text-brand-900">换位练习</h3><p className="mt-1 text-xs leading-6 text-brand-400">记录每一次视角交换的体验。</p></div>
         <Badge variant="mature">{logs.length} 次</Badge>
       </div>
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">切换记录加载失败。</p>
+          <button type="button" onClick={() => void load()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+        </div>
+      )}
       {logs.length > 0 && (
         <div className="mb-4 max-h-40 space-y-2 overflow-y-auto">
           {(showAll ? logs : logs.slice(0, 8)).map(log => (

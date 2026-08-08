@@ -5,6 +5,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
+import { useToast } from '../../hooks/useToast';
 import type { Entry } from '../../db/schema';
 
 const DRAFT_KEY_PREFIX = 'wonderland-draft-';
@@ -31,18 +32,22 @@ interface Props {
 
 export default function WonderlandEditor({ stageId = 'prep', variant = 'prep' }: Props) {
   const { addEntry, removeEntry } = useEntryStore();
+  const showToast = useToast(state => state.show);
   const [versions, setVersions] = useState<Entry[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<Entry | null>(null);
   const [draft, setDraft] = useState(() => loadDraft(stageId));
   const [saving, setSaving] = useState(false);
   const [lastSavedContent, setLastSavedContent] = useState(() => loadDraft(stageId));
 
   const loadVersions = useCallback(async () => {
+    setLoadError(false);
     try {
       const rows = await getWonderlandEntries(stageId);
       setVersions(rows);
     } catch (error) {
       console.error(error);
+      setLoadError(true);
     }
   }, [stageId]);
 
@@ -80,6 +85,7 @@ export default function WonderlandEditor({ stageId = 'prep', variant = 'prep' }:
       await loadVersions();
     } catch (error) {
       console.error(error);
+      showToast('Wonderland 保存失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -161,6 +167,12 @@ export default function WonderlandEditor({ stageId = 'prep', variant = 'prep' }:
         </div>
         <Badge variant="prep">{versions.length} 版</Badge>
       </div>
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">Wonderland 版本加载失败。</p>
+          <button type="button" onClick={() => void loadVersions()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+        </div>
+      )}
 
       {currentVersion && prevVersion && (
         <div className="mb-4">

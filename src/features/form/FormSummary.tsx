@@ -15,11 +15,19 @@ interface FormSummaryProps {
 }
 
 export default function FormSummary({ embedded = false }: FormSummaryProps) {
-  const { formDetails, loadFormDetails } = useFormStore();
+  const { formDetails, loadFormDetails, loadError } = useFormStore();
 
   useEffect(() => { loadFormDetails(); }, [loadFormDetails]);
 
-  if (formDetails.length === 0) return null;
+  if (formDetails.length === 0) {
+    if (!loadError) return null;
+    return (
+      <div role="alert" className="rounded-xl border border-red-200 bg-red-50/70 p-3 text-xs font-bold text-red-600">
+        <span>形态资料加载失败。</span>
+        <button type="button" onClick={() => void loadFormDetails()} className="ml-2 underline hover:text-red-800">重试</button>
+      </div>
+    );
+  }
 
   const content = (
     <>
@@ -42,8 +50,18 @@ export default function FormSummary({ embedded = false }: FormSummaryProps) {
   );
 
   if (embedded) {
-    return <div className="mb-4 rounded-xl border border-purple-100 bg-white/60 p-3">{content}</div>;
+    return (
+      <div className="mb-4 space-y-2">
+        {loadError && <p role="alert" className="text-[10px] font-bold text-red-500">形态资料刷新失败，当前显示上次成功读取的内容。</p>}
+        <div className="rounded-xl border border-purple-100 bg-white/60 p-3">{content}</div>
+      </div>
+    );
   }
 
-  return <Card padding="sm" hoverable={false}>{content}</Card>;
+  return (
+    <Card padding="sm" hoverable={false}>
+      {loadError && <p role="alert" className="mb-2 text-[10px] font-bold text-red-500">形态资料刷新失败，当前显示上次成功读取的内容。</p>}
+      {content}
+    </Card>
+  );
 }

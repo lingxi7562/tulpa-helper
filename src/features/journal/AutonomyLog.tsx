@@ -6,6 +6,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
+import { useToast } from '../../hooks/useToast';
 import type { Entry } from '../../db/schema';
 
 const DRAFT_KEY_PREFIX = 'autonomy-draft-';
@@ -28,7 +29,9 @@ function clearDraft(stageId: string) {
 export default function AutonomyLog() {
   const { addEntry, removeEntry, updateEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
+  const showToast = useToast(state => state.show);
   const [logs, setLogs] = useState<Entry[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [draft, setDraft] = useState(() => loadDraft(activeStageId));
   const [saving, setSaving] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -36,11 +39,13 @@ export default function AutonomyLog() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadLogs = useCallback(async () => {
+    setLoadError(false);
     try {
       const rows = await getAutonomyEntries(activeStageId);
       setLogs(rows);
     } catch (error) {
       console.error(error);
+      setLoadError(true);
     }
   }, [activeStageId]);
 
@@ -80,6 +85,7 @@ export default function AutonomyLog() {
       await loadLogs();
     } catch (error) {
       console.error(error);
+      showToast('自主性记录删除失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -111,6 +117,12 @@ export default function AutonomyLog() {
         </div>
         <Badge variant="dev">{logs.length} 条</Badge>
       </div>
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">自主性记录加载失败。</p>
+          <button type="button" onClick={() => void loadLogs()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+        </div>
+      )}
 
       {logs.length > 0 && (
         <div className="mb-4 max-h-48 space-y-2 overflow-y-auto">

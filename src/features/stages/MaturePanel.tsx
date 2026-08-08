@@ -49,17 +49,19 @@ function FormReference({ senseType, senseLabel, formDetails }: {
 
 export default function MaturePanel() {
   const [levels, setLevels] = useState<{ sense_type: string; level: number }[]>([]);
+  const [levelsError, setLevelsError] = useState(false);
   const [editingSense, setEditingSense] = useState<string | null>(null);
   const [savingSense, setSavingSense] = useState<string | null>(null);
   const [showExtendedSenses, setShowExtendedSenses] = useState(false);
   const { heatmapData, stageBreakdown, totalSeconds, refresh } = useStats();
-  const { formDetails, loadFormDetails } = useFormStore();
+  const { formDetails } = useFormStore();
 
   const loadLevels = useCallback(async () => {
-    try { setLevels(await getImpositionLevels()); } catch (e) { console.error(e); }
+    setLevelsError(false);
+    try { setLevels(await getImpositionLevels()); }
+    catch (e) { console.error(e); setLevelsError(true); }
   }, []);
   useEffect(() => { loadLevels(); }, [loadLevels]);
-  useEffect(() => { loadFormDetails(); }, [loadFormDetails]);
 
   const handleLevel = async (sense: string, level: number) => {
     if (savingSense === sense) return;
@@ -69,6 +71,7 @@ export default function MaturePanel() {
       await loadLevels();
     } catch (e) {
       console.error(e);
+      setLevelsError(true);
     } finally {
       setSavingSense(null);
     }
@@ -101,6 +104,12 @@ export default function MaturePanel() {
           <p className="mt-1 text-xs text-brand-400">一次只专注一种感受，缓慢建立清晰度。</p>
         </div>
         <FormSummary embedded />
+        {levelsError && (
+          <div className="mb-3 rounded-xl border border-red-200 bg-red-50/70 p-3">
+            <p role="alert" className="text-xs font-bold text-red-600">感官练习数据加载失败。</p>
+            <button type="button" onClick={() => void loadLevels()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {SENSES.filter(s => s.priority === 'primary').map(sense => {
             const lvl = levels.find(l => l.sense_type === sense.type);

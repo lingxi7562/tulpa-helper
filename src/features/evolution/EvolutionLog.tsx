@@ -3,6 +3,7 @@ import { createDeviation, deleteDeviation, getDeviations } from '../../db/databa
 import type { Deviation, DeviationTargetType } from '../../db/schema';
 import Button from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Input';
+import { useToast } from '../../hooks/useToast';
 
 interface Props {
   targetType: DeviationTargetType;
@@ -11,13 +12,16 @@ interface Props {
 
 export default function EvolutionLog({ targetType, targetId }: Props) {
   const [notes, setNotes] = useState<Deviation[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  const showToast = useToast(state => state.show);
 
   const loadNotes = useCallback(async () => {
+    setLoadError(false);
     try { setNotes(await getDeviations(targetType, targetId)); }
-    catch (error) { console.error(error); }
+    catch (error) { console.error(error); setLoadError(true); }
   }, [targetId, targetType]);
 
   useEffect(() => { loadNotes(); }, [loadNotes]);
@@ -31,6 +35,7 @@ export default function EvolutionLog({ targetType, targetId }: Props) {
       await loadNotes();
     } catch (error) {
       console.error(error);
+      showToast('偏离记录保存失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -44,6 +49,7 @@ export default function EvolutionLog({ targetType, targetId }: Props) {
       await loadNotes();
     } catch (error) {
       console.error(error);
+      showToast('偏离记录删除失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -62,6 +68,9 @@ export default function EvolutionLog({ targetType, targetId }: Props) {
       {open && (
         <div className="mt-2 space-y-2 rounded-xl bg-white/60 p-2">
           <p className="text-[10px] leading-5 text-brand-400">偏离最初设想是健康而自然的成长。记下 Ta 改变了什么，以及你何时发现。</p>
+          {loadError && (
+            <p role="alert" className="text-[10px] font-bold text-red-500">偏离记录加载失败。 <button type="button" onClick={() => void loadNotes()} className="underline hover:text-red-700">重试</button></p>
+          )}
           {notes.map(note => (
             <div key={note.id} className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
               <div className="flex items-start justify-between gap-2">

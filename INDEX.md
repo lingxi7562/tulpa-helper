@@ -65,11 +65,11 @@ UI (React 组件)
 
 | Store | 职责 |
 |---|---|
-| `useStageStore` | 当前/解锁阶段:loadStages / setActiveStage / unlock / lock |
+| `useStageStore` | 当前/解锁阶段:loadStages / setActiveStage / unlock / lock + 加载错误重试 |
 | `useEntryStore` | 记录 CRUD + 搜索 + 分页(200/页,append 模式) + 加载错误重试 |
-| `useTraitStore` | 特质 CRUD(name/description/weight/category) |
+| `useTraitStore` | 特质 CRUD(name/description/weight/category) + 加载错误重试 |
 | `useTimerStore` | 番茄钟:start / pause / reset / tick / setSessionType / setDurationMinutes |
-| `useFormStore` | 五感形态 CRUD |
+| `useFormStore` | 五感形态 CRUD + 加载错误重试 |
 | `useMilestoneStore` | 里程碑庆祝检查(10/50/100 小时 → confetti)/ dismiss |
 | `useProfileStore` | tulpa 名称 |
 

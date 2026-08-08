@@ -5,6 +5,7 @@ import { getResonanceEntries } from '../../db/database';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import { useToast } from '../../hooks/useToast';
 import type { Entry } from '../../db/schema';
 
 const MOOD_LABELS = ['', '很淡', '轻微', '中等', '明显', '强烈'];
@@ -48,16 +49,20 @@ function isoWeekLabel(weekStart: Date): string {
 export default function ResonanceTracker() {
   const { addEntry, updateEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
+  const showToast = useToast(state => state.show);
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [mood, setMood] = useState(3);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
+    setLoadError(false);
     try {
       const rows = await getResonanceEntries(DAYS_TO_FETCH);
       setEntries(rows);
     } catch (error) {
       console.error(error);
+      setLoadError(true);
     }
   }, []);
 
@@ -116,6 +121,12 @@ export default function ResonanceTracker() {
         </div>
         <Badge variant="dev">{distinctWeeks} 周</Badge>
       </div>
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">共振记录加载失败。</p>
+          <button type="button" onClick={() => void load()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+        </div>
+      )}
 
       <div className="mb-5">
         <p className="text-[11px] font-bold text-brand-500 mb-3">本周共振强度</p>

@@ -6,10 +6,13 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Input, { Textarea } from '../../components/ui/Input';
+import { useToast } from '../../hooks/useToast';
 
 export default function MilestoneList() {
   const { activeStageId } = useStageStore();
+  const showToast = useToast(state => state.show);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -17,7 +20,9 @@ export default function MilestoneList() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
-    try { setMilestones(await getMilestones(activeStageId) as Milestone[]); } catch (e) { console.error(e); }
+    setLoadError(false);
+    try { setMilestones(await getMilestones(activeStageId) as Milestone[]); }
+    catch (e) { console.error(e); setLoadError(true); }
   }, [activeStageId]);
   useEffect(() => { load(); }, [load]);
 
@@ -30,7 +35,7 @@ export default function MilestoneList() {
       setNotes('');
       setShowForm(false);
       await load();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); showToast('里程碑保存失败，请重试'); }
     finally { setSaving(false); }
   };
 
@@ -49,6 +54,12 @@ export default function MilestoneList() {
         </div>
         <Badge>{milestones.length} 项</Badge>
       </div>
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">里程碑加载失败。</p>
+          <button type="button" onClick={() => void load()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+        </div>
+      )}
 
       {milestones.length > 0 && (
         <div className="mb-4 max-h-56 space-y-2 overflow-y-auto">
@@ -69,7 +80,7 @@ export default function MilestoneList() {
                           await deleteMilestone(m.id);
                           setDeletingId(null);
                           await load();
-                        } catch (e) { console.error(e); }
+                        } catch (e) { console.error(e); showToast('里程碑删除失败，请重试'); }
                       }}
                       className="grid h-6 min-w-6 place-items-center rounded-full bg-red-600 px-2 text-[10px] font-bold text-white"
                     >确认</button>

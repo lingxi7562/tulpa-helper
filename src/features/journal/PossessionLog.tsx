@@ -8,6 +8,7 @@ import Badge from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Input';
 import Input from '../../components/ui/Input';
 import type { Entry } from '../../db/schema';
+import { useToast } from '../../hooks/useToast';
 
 const BODY_PARTS = ['手部', '手臂', '头部', '全身', '其他'];
 
@@ -16,7 +17,9 @@ interface Props { onSaved?: () => void; }
 export default function PossessionLog({ onSaved }: Props) {
   const { addEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
+  const showToast = useToast(state => state.show);
   const [logs, setLogs] = useState<Entry[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [part, setPart] = useState('手部');
   const [customPart, setCustomPart] = useState('');
   const [notes, setNotes] = useState('');
@@ -24,10 +27,11 @@ export default function PossessionLog({ onSaved }: Props) {
   const [showAll, setShowAll] = useState(false);
 
   const load = useCallback(async () => {
+    setLoadError(false);
     try {
       const rows = await getEntriesByTag(activeStageId, 'practice', 'possession');
       setLogs(rows);
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error(error); setLoadError(true); }
   }, [activeStageId]);
 
   useEffect(() => { load(); }, [load]);
@@ -49,7 +53,7 @@ export default function PossessionLog({ onSaved }: Props) {
       setCustomPart('');
       await load();
       onSaved?.();
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error(error); showToast('身体练习记录保存失败，请重试'); }
     finally { setSaving(false); }
   };
 
@@ -59,6 +63,12 @@ export default function PossessionLog({ onSaved }: Props) {
         <div><h3 className="font-black text-brand-900">附身练习</h3><p className="mt-1 text-xs leading-6 text-brand-400">收集合作与控制练习的进展。</p></div>
         <Badge variant="mature">{logs.length} 次</Badge>
       </div>
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">身体练习记录加载失败。</p>
+          <button type="button" onClick={() => void load()} className="mt-1 text-[10px] font-bold text-red-700 underline hover:text-red-900">重试</button>
+        </div>
+      )}
       {logs.length > 0 && (
         <div className="mb-4 max-h-40 space-y-2 overflow-y-auto">
           {(showAll ? logs : logs.slice(0, 8)).map(log => (
