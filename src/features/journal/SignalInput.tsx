@@ -33,7 +33,7 @@ export default function SignalInput() {
     <Card hoverable={false}>
       <div className="mb-5">
         <h3 className="font-black text-brand-900">回应迹象</h3>
-        <p className="mt-1 text-xs leading-6 text-brand-400">记录那些微小的信号——head pressure、情绪波动、莫名念头……它们可能正是 Ta 在尝试沟通。</p>
+        <p className="mt-1 text-xs leading-6 text-brand-400">记录那些微小的体验——head pressure、情绪波动、莫名念头……它们可能来自注意力、情绪、身体或关系互动；先观察，不必马上下结论。</p>
       </div>
       <div className="flex flex-col gap-3 rounded-2xl bg-brand-50 p-3">
         <Textarea

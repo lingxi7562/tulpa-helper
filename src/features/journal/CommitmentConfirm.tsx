@@ -79,10 +79,10 @@ export default function CommitmentConfirm() {
     <Card hoverable={false} className="relative border-emerald-200/60 bg-gradient-to-br from-emerald-50/40 via-white to-brand-50/60">
       <h3 className="font-black text-brand-900">给彼此一个承诺</h3>
       <p className="mt-2 text-sm leading-6 text-brand-600">
-        Tulpa 是一段需要耐心与真诚的关系。在开始之前，请确认你已准备好投入时间与心力，尊重并珍惜这段独一无二的连接。
+        这是一次可以调整的练习。在开始之前，请确认你愿意为它留出时间与注意力，同时保留暂停、改变节奏或结束的权利。
       </p>
       <p className="mt-2 text-xs leading-5 text-brand-400">
-        这个确认不意味着完美——它只意味着你愿意开始，并愿意在困难时也陪伴在旁。
+        这个确认不意味着必须相信某种解释，也不意味着要牺牲现实生活；你的安全、健康与自主选择始终优先。
       </p>
       {errorMsg && (
         <p className="mt-3 text-xs font-bold text-red-500">{errorMsg}</p>
