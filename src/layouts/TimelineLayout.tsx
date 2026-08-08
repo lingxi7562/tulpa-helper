@@ -16,8 +16,16 @@ export default function TimelineLayout() {
   const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadingPageRef = useRef(false);
+  const loadingTokenRef = useRef(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(searchInput.trim().slice(0, 120)), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
 
   const startEdit = (id: number) => {
     if (savingEdit) return;
@@ -49,13 +57,15 @@ export default function TimelineLayout() {
     }
   };
 
-  // 首次只加载一页，后续滚动到底部时追加
+  // 首次只加载一页，后续滚动到底部时追加；搜索变化会丢弃旧结果。
   useEffect(() => {
+    const token = ++loadingTokenRef.current;
     loadingPageRef.current = true;
-    loadEntries(undefined, PAGE_SIZE, 0).finally(() => {
-      loadingPageRef.current = false;
+    scrollRef.current?.scrollTo({ top: 0 });
+    loadEntries(undefined, PAGE_SIZE, 0, false, searchQuery).finally(() => {
+      if (token === loadingTokenRef.current) loadingPageRef.current = false;
     });
-  }, [loadEntries]);
+  }, [loadEntries, searchQuery]);
 
   const handleScroll = () => {
     const element = scrollRef.current;
@@ -63,9 +73,10 @@ export default function TimelineLayout() {
     const distanceToBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
     if (distanceToBottom > LOAD_MORE_THRESHOLD) return;
 
+    const token = ++loadingTokenRef.current;
     loadingPageRef.current = true;
-    loadEntries(undefined, PAGE_SIZE, entries.length, true).finally(() => {
-      loadingPageRef.current = false;
+    loadEntries(undefined, PAGE_SIZE, entries.length, true, searchQuery).finally(() => {
+      if (token === loadingTokenRef.current) loadingPageRef.current = false;
     });
   };
 
@@ -82,8 +93,25 @@ export default function TimelineLayout() {
       <div className="mx-auto max-w-4xl px-4 py-9 sm:px-8 sm:py-12">
         <header className="mb-10 animate-[pageEnter_.45s_var(--ease)_both]"><p className="eyebrow">Our Story</p><h1 className="mt-3 text-3xl font-black tracking-tight text-brand-900">共同走过的时光</h1><p className="mt-2 text-sm leading-6 text-brand-500">每一次专注、每一句对话，都在这里留下温度。</p></header>
 
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">搜索记录</span>
+            <input
+              type="search"
+              value={searchInput}
+              onChange={event => setSearchInput(event.target.value)}
+              placeholder="搜索标题、正文或标签"
+              maxLength={120}
+              className="ui-input w-full"
+              aria-label="搜索记录"
+            />
+          </label>
+          {searchInput && <button type="button" onClick={() => setSearchInput('')} className="rounded-full px-3 py-2 text-xs font-bold text-brand-500 hover:bg-brand-100 hover:text-brand-800">清除</button>}
+          {searchQuery && <span className="text-[10px] font-bold text-brand-400">找到 {totalEntries} 条</span>}
+        </div>
+
         {!entries.length && !loading && (
-          <Card><p className="text-sm text-brand-400">旅程还很安静。完成一次专注后，故事会从这里开始。</p></Card>
+          <Card><p className="text-sm text-brand-400">{searchQuery ? `没有找到包含“${searchQuery}”的记录。` : '旅程还很安静。完成一次专注后，故事会从这里开始。'}</p></Card>
         )}
 
         <div

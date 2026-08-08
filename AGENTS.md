@@ -137,7 +137,7 @@ Defined in `src/db/schema.ts`: `'trait' | 'form' | 'session' | 'narration' | 'de
 
 ### Two views
 - **Panel** (`PanelLayout`) — sidebar stage nav + content area, default view
-- **Timeline** (`TimelineLayout`) — vertical scroll with pagination (50 per page, appended)
+- **Timeline** (`TimelineLayout`) — vertical scroll with server-side search and pagination (200 per page, appended)
 
 ## File Placement Rules
 

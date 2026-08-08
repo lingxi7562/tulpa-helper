@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getEntries, getEntryById, getEntryCount, createEntry, deleteEntry, updateEntry } from '../db/database';
+import { getEntries, getEntryById, getEntryCount, searchEntries, getSearchEntryCount, createEntry, deleteEntry, updateEntry } from '../db/database';
 import type { Entry, EntryType } from '../db/schema';
 
 interface EntryState {
@@ -7,11 +7,19 @@ interface EntryState {
   totalEntries: number;
   revision: number;
   queryStageId: string | null;
+  searchQuery: string;
   loading: boolean;
-  loadEntries: (stageId?: string, limit?: number, offset?: number, append?: boolean) => Promise<void>;
+  loadEntries: (stageId?: string, limit?: number, offset?: number, append?: boolean, searchQuery?: string) => Promise<void>;
   addEntry: (e: { stage_id: string; type: EntryType; title: string; content?: string; tags?: string; duration_seconds?: number; mood?: number }) => Promise<number>;
   removeEntry: (id: number) => Promise<void>;
   updateEntry: (id: number, fields: { title?: string; content?: string; mood?: number; tags?: string }) => Promise<void>;
+}
+
+let latestLoadRequest = 0;
+
+function entryMatchesQuery(entry: Entry, query: string): boolean {
+  if (!query) return true;
+  return `${entry.title}\n${entry.content}\n${entry.tags}`.toLocaleLowerCase().includes(query.toLocaleLowerCase());
 }
 
 export const useEntryStore = create<EntryState>((set) => ({
@@ -19,24 +27,33 @@ export const useEntryStore = create<EntryState>((set) => ({
   totalEntries: 0,
   revision: 0,
   queryStageId: null,
+  searchQuery: '',
   loading: false,
-  loadEntries: async (stageId, limit = 50, offset = 0, append = false) => {
-    set({ loading: true });
+  loadEntries: async (stageId, limit = 50, offset = 0, append = false, searchQuery = '') => {
+    const requestId = ++latestLoadRequest;
+    const normalizedQuery = searchQuery.trim().slice(0, 120);
+    set((state) => ({
+      loading: true,
+      entries: append ? state.entries : [],
+      totalEntries: append ? state.totalEntries : 0,
+    }));
     try {
       const [rows, totalEntries] = await Promise.all([
-        getEntries(stageId, limit, offset),
-        getEntryCount(stageId),
+        normalizedQuery ? searchEntries(normalizedQuery, stageId, limit, offset) : getEntries(stageId, limit, offset),
+        normalizedQuery ? getSearchEntryCount(normalizedQuery, stageId) : getEntryCount(stageId),
       ]);
+      if (requestId !== latestLoadRequest) return;
       set((s) => ({
         entries: append ? [...s.entries, ...rows] : rows,
         totalEntries,
         queryStageId: append ? s.queryStageId : (stageId ?? null),
+        searchQuery: append ? s.searchQuery : normalizedQuery,
         revision: s.revision + 1,
       }));
     } catch (error) {
-      console.error(error);
+      if (requestId === latestLoadRequest) console.error(error);
     } finally {
-      set({ loading: false });
+      if (requestId === latestLoadRequest) set({ loading: false });
     }
   },
   addEntry: async (e) => {
@@ -50,7 +67,10 @@ export const useEntryStore = create<EntryState>((set) => ({
         console.error(refreshError);
       }
       set((state) => {
-        const belongsToQuery = state.queryStageId === null || state.queryStageId === e.stage_id;
+        const belongsToStage = state.queryStageId === null || state.queryStageId === e.stage_id;
+        const belongsToQuery = created !== null
+          && belongsToStage
+          && (!state.searchQuery || entryMatchesQuery(created, state.searchQuery));
         return {
           entries: belongsToQuery && created
             ? [created, ...state.entries.filter(entry => entry.id !== created?.id)]
@@ -87,10 +107,19 @@ export const useEntryStore = create<EntryState>((set) => ({
     set({ loading: true });
     try {
       await updateEntry(id, fields);
-      set((s) => ({
-        entries: s.entries.map(e => e.id === id ? { ...e, ...fields } as Entry : e),
-        revision: s.revision + 1,
-      }));
+      set((s) => {
+        const updatedEntries = s.entries.map(e => e.id === id ? { ...e, ...fields } as Entry : e);
+        const filteredEntries = s.searchQuery
+          ? updatedEntries.filter(entry => entryMatchesQuery(entry, s.searchQuery))
+          : updatedEntries;
+        return {
+          entries: filteredEntries,
+          totalEntries: filteredEntries.length < updatedEntries.length
+            ? Math.max(0, s.totalEntries - 1)
+            : s.totalEntries,
+          revision: s.revision + 1,
+        };
+      });
     } catch (error) {
       console.error(error);
       throw error;

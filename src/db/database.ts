@@ -17,6 +17,10 @@ function normalizeDays(value: number, fallback: number): number {
   return Number.isFinite(value) ? Math.max(1, Math.min(366, Math.trunc(value))) : fallback;
 }
 
+function normalizeSearchQuery(value: string): string {
+  return value.trim().slice(0, 120);
+}
+
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, character => `\\${character}`);
 }
@@ -77,6 +81,50 @@ export async function getEntries(stageId?: string, limit = 50, offset = 0): Prom
     'SELECT * FROM entries ORDER BY created_at DESC, id DESC LIMIT $1 OFFSET $2',
     [safeLimit, safeOffset],
   );
+}
+
+export async function searchEntries(query: string, stageId?: string, limit = 50, offset = 0): Promise<Entry[]> {
+  const d = await getDb();
+  const normalizedQuery = normalizeSearchQuery(query);
+  if (!normalizedQuery) return getEntries(stageId, limit, offset);
+  const safeLimit = normalizeLimit(limit, 50);
+  const safeOffset = normalizeOffset(offset);
+  const pattern = `%${escapeLike(normalizedQuery)}%`;
+  if (stageId) {
+    return d.select(
+      `SELECT * FROM entries
+       WHERE stage_id = $1
+         AND (title LIKE $2 ESCAPE '\\' OR content LIKE $2 ESCAPE '\\' OR tags LIKE $2 ESCAPE '\\')
+       ORDER BY created_at DESC, id DESC LIMIT $3 OFFSET $4`,
+      [stageId, pattern, safeLimit, safeOffset],
+    );
+  }
+  return d.select(
+    `SELECT * FROM entries
+     WHERE title LIKE $1 ESCAPE '\\' OR content LIKE $1 ESCAPE '\\' OR tags LIKE $1 ESCAPE '\\'
+     ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3`,
+    [pattern, safeLimit, safeOffset],
+  );
+}
+
+export async function getSearchEntryCount(query: string, stageId?: string): Promise<number> {
+  const d = await getDb();
+  const normalizedQuery = normalizeSearchQuery(query);
+  if (!normalizedQuery) return getEntryCount(stageId);
+  const pattern = `%${escapeLike(normalizedQuery)}%`;
+  const rows = stageId
+    ? await d.select<{ count: number | string }[]>(
+      `SELECT COUNT(*) as count FROM entries
+       WHERE stage_id = $1
+         AND (title LIKE $2 ESCAPE '\\' OR content LIKE $2 ESCAPE '\\' OR tags LIKE $2 ESCAPE '\\')`,
+      [stageId, pattern],
+    )
+    : await d.select<{ count: number | string }[]>(
+      `SELECT COUNT(*) as count FROM entries
+       WHERE title LIKE $1 ESCAPE '\\' OR content LIKE $1 ESCAPE '\\' OR tags LIKE $1 ESCAPE '\\'`,
+      [pattern],
+    );
+  return Number(rows[0]?.count ?? 0);
 }
 
 export async function getEntryCount(stageId?: string): Promise<number> {

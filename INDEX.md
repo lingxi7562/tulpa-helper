@@ -53,7 +53,7 @@ UI (React 组件)
 ## DB API(src/db/database.ts,~40 个导出)
 
 - **Stages**: getStages / unlockStage / lockStage
-- **Entries**: getEntries(分页) / getEntryCount / getAllEntries / getWonderlandEntries / getAutonomyEntries / getResonanceEntries / getEntriesByTag / getEntriesByType / createEntry / updateEntry / deleteEntry
+- **Entries**: getEntries / searchEntries(分页) / getEntryCount / getSearchEntryCount / getAllEntries / getWonderlandEntries / getAutonomyEntries / getResonanceEntries / getEntriesByTag / getEntriesByType / createEntry / updateEntry / deleteEntry
 - **Dialogue**: createDialogueEntry / getDialogueMessages / createDialogueMessage / hasCommitmentConfirmation
 - **Traits**: getTraits / createTrait / updateTrait / deleteTrait
 - **Form**: getFormDetails / createFormDetail / updateFormDetail / deleteFormDetail / getDeviations / createDeviation / deleteDeviation
@@ -66,7 +66,7 @@ UI (React 组件)
 | Store | 职责 |
 |---|---|
 | `useStageStore` | 当前/解锁阶段:loadStages / setActiveStage / unlock / lock |
-| `useEntryStore` | 记录 CRUD + 分页(默认 50/页,append 模式) |
+| `useEntryStore` | 记录 CRUD + 搜索 + 分页(200/页,append 模式) |
 | `useTraitStore` | 特质 CRUD(name/description/weight/category) |
 | `useTimerStore` | 番茄钟:start / pause / reset / tick / setSessionType / setDurationMinutes |
 | `useFormStore` | 五感形态 CRUD |
@@ -76,7 +76,7 @@ UI (React 组件)
 ## 视图层、hooks 与 lib
 
 - `src/App.tsx` — 根组件:顶栏(双视图切换 + QuickNarration + 紧凑番茄钟)、面板/时间线切换、全屏统计、Toast、里程碑庆祝弹层
-- `layouts/PanelLayout.tsx` — 面板视图(StageSidebar + 内容区)· `TimelineLayout.tsx` — 时间线(分页 50/页)
+- `layouts/PanelLayout.tsx` — 面板视图(StageSidebar + 内容区)· `TimelineLayout.tsx` — 时间线(搜索 + 分页 200/页)
 - `constants/stages.ts` — 阶段元数据单一来源(icon/color/name,仅 8 行)
 - `hooks/useStats.ts` — 统计数据 hook(error 态,audit-batch7 增强)· `hooks/useToast.ts` — Toast 通知 hook
 - `lib/dialogue.ts` — `parseDialogueText`(/T 对话解析核心,audit-batch7 抽出)· `lib/format.ts` — 格式化工具
