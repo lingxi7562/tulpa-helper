@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useStageStore } from '../../stores/useStageStore';
 import { useProfileStore } from '../../stores/useProfileStore';
 import { useToast } from '../../hooks/useToast';
-import { createDialogueEntry } from '../../db/database';
+import { useEntryStore } from '../../stores/useEntryStore';
 import { parseDialogueText } from '../../lib/dialogue';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -33,6 +33,7 @@ export default function ScribbleInput({ onSaved }: Props) {
   const [recentEntryIds, setRecentEntryIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
   const { activeStageId } = useStageStore();
+  const { addEntry } = useEntryStore();
   const { show } = useToast();
   const tulpaName = useProfileStore(state => state.tulpaName) || 'Ta';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -64,7 +65,14 @@ export default function ScribbleInput({ onSaved }: Props) {
     if (!text.trim() || saving) return;
     setSaving(true);
     try {
-      const entryId = await createDialogueEntry({ stage_id: activeStageId, text: text.trim() });
+      const content = text.trim();
+      const entryId = await addEntry({
+        stage_id: activeStageId,
+        type: 'dialogue',
+        title: Array.from(content).slice(0, 50).join(''),
+        content,
+        tags: '[]',
+      });
       setLastEntryId(entryId);
       setRecentEntryIds(prev => [entryId, ...prev].slice(0, 5));
       setText('');
