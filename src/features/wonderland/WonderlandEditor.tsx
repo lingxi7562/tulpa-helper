@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getWonderlandEntries, deleteEntry } from '../../db/database';
+import { getWonderlandEntries } from '../../db/database';
 import { useEntryStore } from '../../stores/useEntryStore';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export default function WonderlandEditor({ stageId = 'prep', variant = 'prep' }: Props) {
-  const { addEntry } = useEntryStore();
+  const { addEntry, removeEntry } = useEntryStore();
   const [versions, setVersions] = useState<Entry[]>([]);
   const [currentVersion, setCurrentVersion] = useState<Entry | null>(null);
   const [draft, setDraft] = useState(() => loadDraft(stageId));
@@ -71,7 +71,7 @@ export default function WonderlandEditor({ stageId = 'prep', variant = 'prep' }:
     if (!window.confirm('确定删除此版本？此操作不可撤销。')) return;
     setSaving(true);
     try {
-      await deleteEntry(id);
+      await removeEntry(id);
       if (currentVersion?.id === id) {
         setCurrentVersion(null);
         setDraft('');

@@ -97,12 +97,29 @@ export const useEntryStore = create<EntryState>((set) => ({
   removeEntry: async (id) => {
     set({ loading: true });
     try {
+      let deletedEntry: Entry | null = null;
+      try {
+        deletedEntry = await getEntryById(id);
+      } catch (lookupError) {
+        // The delete may still succeed; use the loaded row as a safe fallback.
+        console.error(lookupError);
+      }
       await deleteEntry(id);
-      set((s) => ({
-        entries: s.entries.filter((e) => e.id !== id),
-        totalEntries: Math.max(0, s.totalEntries - 1),
-        revision: s.revision + 1,
-      }));
+      set((s) => {
+        const loadedEntry = s.entries.find(entry => entry.id === id);
+        const removedEntry = deletedEntry ?? loadedEntry;
+        const belongsToStage = removedEntry !== undefined
+          && (s.queryStageId === null || removedEntry.stage_id === s.queryStageId);
+        const belongsToSearch = removedEntry !== undefined
+          && (!s.searchQuery || entryMatchesQuery(removedEntry, s.searchQuery));
+        return {
+          entries: s.entries.filter((e) => e.id !== id),
+          totalEntries: belongsToStage && belongsToSearch
+            ? Math.max(0, s.totalEntries - 1)
+            : s.totalEntries,
+          revision: s.revision + 1,
+        };
+      });
     } catch (error) {
       console.error(error);
       throw error;

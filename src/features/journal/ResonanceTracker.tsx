@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useStageStore } from '../../stores/useStageStore';
-import { getResonanceEntries, updateEntry } from '../../db/database';
+import { getResonanceEntries } from '../../db/database';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -46,7 +46,7 @@ function isoWeekLabel(weekStart: Date): string {
 }
 
 export default function ResonanceTracker() {
-  const { addEntry } = useEntryStore();
+  const { addEntry, updateEntry } = useEntryStore();
   const { activeStageId } = useStageStore();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [mood, setMood] = useState(3);
