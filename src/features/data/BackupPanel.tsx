@@ -45,10 +45,10 @@ function isBackupFile(value: unknown): value is BackupFile {
   const deviations = file.deviations;
   const milestones = file.milestones;
   const impositionLevels = file.impositionLevels;
-  const collections = [stages, entries, dialogueMessages, traits, formDetails, deviations, milestones, impositionLevels];
   if (!Array.isArray(stages) || !Array.isArray(entries) || !Array.isArray(dialogueMessages)
     || !Array.isArray(traits) || !Array.isArray(formDetails) || !Array.isArray(deviations)
     || !Array.isArray(milestones) || !Array.isArray(impositionLevels)) return false;
+  const collections = [stages, entries, dialogueMessages, traits, formDetails, deviations, milestones, impositionLevels];
   if (!collections.every(collection => collection.length <= 100_000)) return false;
 
   return file.format === 'tulpa-helper-backup'
