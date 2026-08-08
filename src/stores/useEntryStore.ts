@@ -31,6 +31,7 @@ export const useEntryStore = create<EntryState>((set) => ({
         entries: append ? [...s.entries, ...rows] : rows,
         totalEntries,
         queryStageId: append ? s.queryStageId : (stageId ?? null),
+        revision: s.revision + 1,
       }));
     } catch (error) {
       console.error(error);

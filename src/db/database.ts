@@ -1,5 +1,5 @@
 import Database from '@tauri-apps/plugin-sql';
-import { type Deviation, type DeviationTargetType, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
+import { type Deviation, type DeviationTargetType, type DialogueMessage, type Entry, type EntryType, type FormDetail, type ImpositionLevel, type Milestone, type Speaker, type Stage, type Trait } from './schema';
 import { localDateKey, shiftLocalDate } from '../lib/date';
 
 let dbPromise: Promise<Database> | undefined;
@@ -19,6 +19,19 @@ function normalizeDays(value: number, fallback: number): number {
 
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, character => `\\${character}`);
+}
+
+export interface DatabaseBackup {
+  version: 1;
+  exportedAt: string;
+  stages: Stage[];
+  entries: Entry[];
+  dialogueMessages: DialogueMessage[];
+  traits: Trait[];
+  formDetails: FormDetail[];
+  deviations: Deviation[];
+  milestones: Milestone[];
+  impositionLevels: ImpositionLevel[];
 }
 
 export function getDb(): Promise<Database> {
@@ -387,4 +400,92 @@ export async function getStageTypeCounts(stageId: string): Promise<Record<string
     map[row.type] = row.count;
   }
   return map;
+}
+
+export async function exportDatabaseSnapshot(): Promise<DatabaseBackup> {
+  const d = await getDb();
+  const [stages, entries, dialogueMessages, traits, formDetails, deviations, milestones, impositionLevels] = await Promise.all([
+    d.select<Stage[]>('SELECT * FROM stages ORDER BY "order"'),
+    d.select<Entry[]>('SELECT * FROM entries ORDER BY created_at ASC, id ASC'),
+    d.select<DialogueMessage[]>('SELECT * FROM dialogue_messages ORDER BY entry_id ASC, seq ASC, id ASC'),
+    d.select<Trait[]>('SELECT * FROM traits ORDER BY id ASC'),
+    d.select<FormDetail[]>('SELECT * FROM form_details ORDER BY id ASC'),
+    d.select<Deviation[]>('SELECT * FROM deviations ORDER BY id ASC'),
+    d.select<Milestone[]>('SELECT * FROM milestones ORDER BY id ASC'),
+    d.select<ImpositionLevel[]>('SELECT * FROM imposition_levels ORDER BY sense_type ASC'),
+  ]);
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    stages,
+    entries,
+    dialogueMessages,
+    traits,
+    formDetails,
+    deviations,
+    milestones,
+    impositionLevels,
+  };
+}
+
+/**
+ * Merge a previously exported snapshot without deleting local records.
+ * Each row is independently idempotent; a failed import cannot erase data.
+ */
+export async function importDatabaseSnapshot(snapshot: DatabaseBackup): Promise<void> {
+  if (snapshot.version !== 1) throw new Error('Unsupported backup version');
+  const d = await getDb();
+
+  for (const stage of snapshot.stages) {
+    await d.execute(
+      'INSERT OR IGNORE INTO stages (id, name, "order", description, unlocked_at) VALUES ($1, $2, $3, $4, $5)',
+      [stage.id, stage.name, stage.order, stage.description, stage.unlocked_at]
+    );
+  }
+  for (const trait of snapshot.traits) {
+    await d.execute(
+      'INSERT OR IGNORE INTO traits (id, name, description, weight, category) VALUES ($1, $2, $3, $4, $5)',
+      [trait.id, trait.name, trait.description, trait.weight, trait.category]
+    );
+  }
+  for (const detail of snapshot.formDetails) {
+    await d.execute(
+      'INSERT OR IGNORE INTO form_details (id, sense_type, description) VALUES ($1, $2, $3)',
+      [detail.id, detail.sense_type, detail.description]
+    );
+  }
+  for (const entry of snapshot.entries) {
+    await d.execute(
+      `INSERT OR IGNORE INTO entries
+       (id, stage_id, type, title, content, tags, created_at, duration_seconds, mood)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [entry.id, entry.stage_id, entry.type, entry.title, entry.content, entry.tags, entry.created_at, entry.duration_seconds, entry.mood]
+    );
+  }
+  for (const message of snapshot.dialogueMessages) {
+    await d.execute(
+      `INSERT OR IGNORE INTO dialogue_messages (id, entry_id, speaker, content, seq)
+       SELECT $1, $2, $3, $4, $5
+       WHERE EXISTS (SELECT 1 FROM entries WHERE id = $2 AND type = 'dialogue')`,
+      [message.id, message.entry_id, message.speaker, message.content, message.seq]
+    );
+  }
+  for (const deviation of snapshot.deviations) {
+    await d.execute(
+      'INSERT OR IGNORE INTO deviations (id, target_type, target_id, note, created_at) VALUES ($1, $2, $3, $4, $5)',
+      [deviation.id, deviation.target_type, deviation.target_id, deviation.note, deviation.created_at]
+    );
+  }
+  for (const milestone of snapshot.milestones) {
+    await d.execute(
+      'INSERT OR IGNORE INTO milestones (id, stage_id, title, achieved_at, notes) VALUES ($1, $2, $3, $4, $5)',
+      [milestone.id, milestone.stage_id, milestone.title, milestone.achieved_at, milestone.notes]
+    );
+  }
+  for (const level of snapshot.impositionLevels) {
+    await d.execute(
+      'INSERT OR IGNORE INTO imposition_levels (sense_type, level) VALUES ($1, $2)',
+      [level.sense_type, level.level]
+    );
+  }
 }

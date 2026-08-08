@@ -94,7 +94,7 @@ UI (React 组件)
 | journal | AutonomyLog / CommitmentConfirm / MilestoneList / PossessionLog / ResonanceTracker / SignalInput / SwitchingLog | 自主性观察、承诺确认、里程碑、附身/切换练习、共振追踪、回应信号 |
 | narration | QuickNarration | 顶栏快捷旁白入口 |
 | evolution | EvolutionLog | 演化/偏离记录 |
-| stats | StatsPanel / MilestoneCelebrate | 全屏统计(总时长/阶段/7 天趋势/30 天热力图)+ confetti 庆祝 |
+| stats | StatsPanel / MilestoneCelebrate / BackupPanel | 全屏统计(总时长/阶段/7 天趋势/30 天热力图)、本地 JSON 备份合并 + confetti 庆祝 |
 
 ## UI 基元(src/components/ui/,8 个 ✓)
 

@@ -6,6 +6,7 @@ import Input from '../../components/ui/Input';
 import Badge from '../../components/ui/Badge';
 import IconButton from '../../components/ui/IconButton';
 import EvolutionLog from '../evolution/EvolutionLog';
+import { useToast } from '../../hooks/useToast';
 
 const TIER_MAP: Record<number, { label: string; color: string; activeColor: string }> = {
   8: { label: '核心', color: 'text-amber-500', activeColor: 'border-amber-500 bg-amber-500 text-white' },
@@ -29,6 +30,7 @@ function nextTierWeight(weight: number) {
 
 export default function TraitManager() {
   const { traits, addTrait, removeTrait, updateTrait } = useTraitStore();
+  const showToast = useToast(state => state.show);
   const [name, setName] = useState('');
   const [weight, setWeight] = useState(5);
   const [showForm, setShowForm] = useState(false);
@@ -49,6 +51,7 @@ export default function TraitManager() {
       setShowForm(false);
     } catch (error) {
       console.error(error);
+      showToast('保存特质失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -62,6 +65,7 @@ export default function TraitManager() {
       await updateTrait(id, { weight: nextTierWeight(trait.weight) });
     } catch (error) {
       console.error(error);
+      showToast('更新特质失败，请重试');
     } finally {
       setUpdatingId(null);
       setEditingWeight(null);
@@ -74,6 +78,7 @@ export default function TraitManager() {
       await removeTrait(id);
     } catch (error) {
       console.error(error);
+      showToast('删除特质失败，请重试');
     } finally {
       setDeletingId(null);
       setEditingWeight(null);

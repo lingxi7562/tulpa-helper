@@ -6,6 +6,7 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import MilestoneList from '../journal/MilestoneList';
 import { formatDuration } from '../../lib/format';
+import BackupPanel from '../data/BackupPanel';
 
 interface Props { onClose: () => void; }
 
@@ -28,6 +29,7 @@ export default function StatsPanel({ onClose }: Props) {
         </div>
         <Card hoverable={false}><div className="mb-6 flex items-end justify-between gap-4"><div><h2 className="font-black text-brand-900">近 30 天</h2><p className="mt-1 text-xs text-brand-400">每一个有颜色的格子，都是一次靠近。</p></div><span className="hidden text-[10px] text-brand-400 sm:block">少　<span className="inline-block h-3 w-3 rounded bg-brand-100" /> <span className="inline-block h-3 w-3 rounded bg-emerald-300" /> <span className="inline-block h-3 w-3 rounded bg-emerald-700" />　多</span></div><Heatmap data={heatmapData.map(item => ({ date: item.day, value: item.total }))} days={30} /></Card>
         <MilestoneList />
+        <BackupPanel />
       </div>
     </main>
   );
