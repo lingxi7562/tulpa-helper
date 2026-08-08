@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getTotalDuration, getDurationByStage, getDailyDurations, getConsecutiveDays } from '../db/database';
 import { useEntryStore } from '../stores/useEntryStore';
+import { fillDailySeries } from '../lib/date';
 
 interface StatsData {
   totalSeconds: number;
@@ -14,6 +15,7 @@ interface StatsData {
 
 export function useStats(): StatsData & { refresh: () => void } {
   const entryRevision = useEntryStore(state => state.revision);
+  const requestId = useRef(0);
   const [data, setData] = useState<StatsData>({
     totalSeconds: 0,
     stageBreakdown: [],
@@ -25,6 +27,7 @@ export function useStats(): StatsData & { refresh: () => void } {
   });
 
   const refresh = useCallback(async () => {
+    const currentRequest = ++requestId.current;
     setData((d) => ({ ...d, loading: true }));
     try {
       const [total, breakdown, daily, heatmap, consecutive]: [
@@ -40,20 +43,22 @@ export function useStats(): StatsData & { refresh: () => void } {
         getDailyDurations(30),
         getConsecutiveDays(),
       ]);
+      if (currentRequest !== requestId.current) return;
       setData({
         totalSeconds: total,
         stageBreakdown: breakdown,
-        dailyDurations: daily,
-        heatmapData: heatmap,
+        dailyDurations: fillDailySeries(daily, 7),
+        heatmapData: fillDailySeries(heatmap, 30),
         consecutiveDays: consecutive,
         loading: false,
         error: false,
       });
     } catch (error) {
       console.error(error);
+      if (currentRequest !== requestId.current) return;
       setData((d) => ({ ...d, loading: false, error: true }));
     } finally {
-      setData((d) => ({ ...d, loading: false }));
+      if (currentRequest === requestId.current) setData((d) => ({ ...d, loading: false }));
     }
   }, []);
 

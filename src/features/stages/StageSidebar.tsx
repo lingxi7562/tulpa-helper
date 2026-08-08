@@ -2,15 +2,20 @@ import { useEffect } from 'react';
 import { useStageStore } from '../../stores/useStageStore';
 import { STAGES } from '../../constants/stages';
 import Button from '../../components/ui/Button';
+import { useToast } from '../../hooks/useToast';
 
 interface Props { onOpenStats: () => void; onNavigate?: () => void; }
 
 export default function StageSidebar({ onOpenStats, onNavigate }: Props) {
-  const { stages, activeStageId, setActiveStage, loadStages, unlock } = useStageStore();
+  const { stages, activeStageId, setActiveStage, loadStages, unlock, loading } = useStageStore();
+  const showToast = useToast(state => state.show);
   useEffect(() => { loadStages(); }, [loadStages]);
 
   const handleStageClick = async (stageId: string, unlocked: boolean) => {
-    if (!unlocked) await unlock(stageId);
+    if (!unlocked && !(await unlock(stageId))) {
+      showToast('阶段解锁失败，请重试');
+      return;
+    }
     setActiveStage(stageId);
     onNavigate?.();
   };
@@ -25,7 +30,7 @@ export default function StageSidebar({ onOpenStats, onNavigate }: Props) {
             const unlocked = !!stage.unlocked_at;
             const active = activeStageId === stage.id;
             return (
-              <Button key={stage.id} variant="ghost" onClick={() => handleStageClick(stage.id, unlocked)} className={`relative h-auto w-full !justify-center !rounded-2xl !px-2 !py-3 sm:!justify-start sm:!px-3 ${!unlocked ? 'opacity-45 grayscale' : ''} ${active ? `${info?.bg} ${info?.text} ring-1 ring-inset ${info?.border} shadow-[0_8px_20px_rgba(63,57,49,.07)]` : 'text-brand-600'}`}>
+              <Button key={stage.id} variant="ghost" onClick={() => handleStageClick(stage.id, unlocked)} disabled={loading} aria-current={active ? 'page' : undefined} aria-label={`${stage.name}${unlocked ? '' : '（点击解锁）'}`} className={`relative h-auto w-full !justify-center !rounded-2xl !px-2 !py-3 sm:!justify-start sm:!px-3 ${!unlocked ? 'opacity-45 grayscale' : ''} ${active ? `${info?.bg} ${info?.text} ring-1 ring-inset ${info?.border} shadow-[0_8px_20px_rgba(63,57,49,.07)]` : 'text-brand-600'}`}>
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-lg shadow-sm">{info?.icon}</span>
                 <span className="hidden min-w-0 flex-1 truncate text-left sm:block">{stage.name}</span>
                 {!unlocked && <span className="hidden text-[9px] font-bold tracking-wider text-brand-400 sm:block">解锁</span>}

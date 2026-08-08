@@ -65,13 +65,13 @@ These are hard-won lessons from debugging the `.github/workflows/build.yml` Andr
   ```
 
 ### 6. JAVA_HOME must be explicitly set on Linux runners
-- `actions/setup-java@v4` may not propagate `JAVA_HOME` to subsequent steps on Linux.
+- `actions/setup-java@v5` may not propagate `JAVA_HOME` to subsequent steps on Linux.
 - Explicitly write it:
   ```bash
   echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
   ```
 
-### 7. Use `android-actions/setup-android@v3` with license acceptance
+### 7. Use `android-actions/setup-android@v4` with license acceptance
 - Directly invoking `sdkmanager` without first setting up the SDK via this action is fragile.
 - Always include `log-accepted-android-sdk-licenses: true` or sdkmanager may block on license prompts.
 

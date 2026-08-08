@@ -1,7 +1,25 @@
 import Database from '@tauri-apps/plugin-sql';
 import { MIGRATIONS, type Deviation, type DeviationTargetType, type Entry, type EntryType, type ImpositionLevel, type Speaker, type Stage, type Trait } from './schema';
+import { localDateKey, shiftLocalDate } from '../lib/date';
 
 let db: Database | null = null;
+const MAX_PAGE_SIZE = 500;
+
+function normalizeLimit(value: number, fallback: number): number {
+  return Number.isFinite(value) ? Math.max(1, Math.min(MAX_PAGE_SIZE, Math.trunc(value))) : fallback;
+}
+
+function normalizeOffset(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+}
+
+function normalizeDays(value: number, fallback: number): number {
+  return Number.isFinite(value) ? Math.max(1, Math.min(366, Math.trunc(value))) : fallback;
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, character => `\\${character}`);
+}
 
 export async function getDb(): Promise<Database> {
   if (!db) {
@@ -32,9 +50,19 @@ export async function lockStage(id: string) {
 // === CRUD：entries ===
 export async function getEntries(stageId?: string, limit = 50, offset = 0): Promise<Entry[]> {
   const d = await getDb();
+  const safeLimit = normalizeLimit(limit, 50);
+  const safeOffset = normalizeOffset(offset);
   const where = stageId ? 'WHERE stage_id = $1' : '';
-  const params = stageId ? [stageId] : [];
-  return d.select(`SELECT * FROM entries ${where} ORDER BY created_at DESC, id DESC LIMIT ${limit} OFFSET ${offset}`, params);
+  if (stageId) {
+    return d.select(
+      `SELECT * FROM entries ${where} ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3`,
+      [stageId, safeLimit, safeOffset],
+    );
+  }
+  return d.select(
+    'SELECT * FROM entries ORDER BY created_at DESC, id DESC LIMIT $1 OFFSET $2',
+    [safeLimit, safeOffset],
+  );
 }
 
 export async function getEntryCount(stageId?: string): Promise<number> {
@@ -77,16 +105,19 @@ export async function getAutonomyEntries(stageId?: string): Promise<Entry[]> {
 export async function getEntriesByTag(stageId: string, type: string, tag: string): Promise<Entry[]> {
   const d = await getDb();
   return d.select(
-    `SELECT * FROM entries WHERE stage_id = $1 AND type = $2 AND tags LIKE $3 ORDER BY created_at DESC, id DESC`,
-    [stageId, type, `%${tag}%`]
+    `SELECT * FROM entries
+     WHERE stage_id = $1 AND type = $2 AND tags LIKE $3 ESCAPE '\\'
+     ORDER BY created_at DESC, id DESC`,
+    [stageId, type, `%"${escapeLike(tag)}"%`]
   );
 }
 
 export async function getResonanceEntries(days: number = 14): Promise<Entry[]> {
   const d = await getDb();
+  const safeDays = normalizeDays(days, 14);
   return d.select(
-    `SELECT * FROM entries WHERE type = 'resonance' AND created_at >= date('now','localtime','-' || ($1 - 1) || ' days') ORDER BY created_at DESC, id DESC`,
-    [days]
+    `SELECT * FROM entries WHERE type = 'resonance' AND created_at >= date('now','localtime','-' || $1 || ' days') ORDER BY created_at DESC, id DESC`,
+    [safeDays - 1]
   );
 }
 
@@ -98,8 +129,12 @@ export async function createEntry(entry: {
   const result = await d.execute(
     `INSERT INTO entries (stage_id, type, title, content, tags, duration_seconds, mood)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [entry.stage_id, entry.type, entry.title, entry.content || '',
-     entry.tags || '[]', entry.duration_seconds || 0, entry.mood || null]
+    [entry.stage_id, entry.type, entry.title, entry.content ?? '',
+     entry.tags ?? '[]',
+     entry.duration_seconds == null || !Number.isFinite(entry.duration_seconds)
+       ? 0
+       : Math.max(0, Math.floor(entry.duration_seconds)),
+     entry.mood == null || !Number.isFinite(entry.mood) ? null : Math.trunc(entry.mood)]
   );
   return result.lastInsertId as number;
 }
@@ -182,7 +217,7 @@ export async function createDialogueEntry(params: {
     const result = await d.execute(
       `INSERT INTO entries (stage_id, type, title, content, tags, duration_seconds, mood)
        VALUES ($1, 'dialogue', $2, $3, '[]', 0, NULL)`,
-      [params.stage_id, params.text.slice(0, 50), params.text]
+       [params.stage_id, Array.from(params.text).slice(0, 50).join(''), params.text]
     );
     const entryId = result.lastInsertId as number;
     for (let i = 0; i < params.messages.length; i++) {
@@ -276,7 +311,7 @@ export async function getImpositionLevels(): Promise<ImpositionLevel[]> {
 }
 
 export async function setImpositionLevel(sense_type: string, level: number) {
-  if (!Number.isInteger(level) || level < 1 || level > 10) throw new RangeError('Level must be 1-10');
+  if (!Number.isInteger(level) || level < 1 || level > 4) throw new RangeError('Level must be 1-4');
   const d = await getDb();
   await d.execute(
     'INSERT INTO imposition_levels (sense_type, level) VALUES ($1, $2) ON CONFLICT(sense_type) DO UPDATE SET level = excluded.level',
@@ -287,9 +322,10 @@ export async function setImpositionLevel(sense_type: string, level: number) {
 // === 按类型查询 entries（避免 fetch-50-then-filter） ===
 export async function getEntriesByType(stageId: string, type: string, limit = 100): Promise<Entry[]> {
   const d = await getDb();
+  const safeLimit = normalizeLimit(limit, 100);
   return d.select(
     'SELECT * FROM entries WHERE stage_id = $1 AND type = $2 ORDER BY created_at DESC, id DESC LIMIT $3',
-    [stageId, type, limit]
+    [stageId, type, safeLimit]
   );
 }
 
@@ -339,41 +375,45 @@ export async function getTotalDuration(): Promise<number> {
   // 排除 switch 类型——换位练习时长是「状态持续时间」而非「主动投入时间」，
   // 混入会虚高「累计专注时长」并影响 10/50/100h 里程碑触发时机
   const rows: any[] = await d.select("SELECT COALESCE(SUM(duration_seconds), 0) as total FROM entries WHERE duration_seconds > 0 AND type != 'switch'");
-  return rows[0]?.total || 0;
+  return Number(rows[0]?.total ?? 0);
 }
 
 export async function getDurationByStage(): Promise<{ stage_id: string; total: number }[]> {
   const d = await getDb();
-  return d.select('SELECT stage_id, SUM(duration_seconds) as total FROM entries WHERE duration_seconds > 0 GROUP BY stage_id');
+  const rows = await d.select<{ stage_id: string; total: number | string }[]>("SELECT stage_id, SUM(duration_seconds) as total FROM entries WHERE duration_seconds > 0 AND type != 'switch' GROUP BY stage_id");
+  return rows.map(row => ({ stage_id: row.stage_id, total: Number(row.total) || 0 }));
 }
 
 export async function getDailyDurations(days: number = 7): Promise<{ day: string; total: number }[]> {
   const d = await getDb();
-  return d.select(
+  const safeDays = normalizeDays(days, 7);
+  const rows = await d.select<{ day: string; total: number | string }[]>(
     `SELECT date(created_at) as day, SUM(duration_seconds) as total
-     FROM entries WHERE duration_seconds > 0 AND created_at >= date('now','localtime','-' || $1 || ' days')
+     FROM entries WHERE duration_seconds > 0 AND type != 'switch'
+       AND created_at >= date('now','localtime','-' || $1 || ' days')
      GROUP BY day ORDER BY day`,
-    [days]
+    [safeDays - 1]
   );
+  return rows.map(row => ({ day: row.day, total: Number(row.total) || 0 }));
 }
 
 export async function getConsecutiveDays(): Promise<number> {
   const d = await getDb();
   const rows: any[] = await d.select(
-    `SELECT DISTINCT date(created_at) as day FROM entries WHERE duration_seconds > 0 ORDER BY day DESC`
+    `SELECT DISTINCT date(created_at) as day
+     FROM entries WHERE duration_seconds > 0 AND type != 'switch'
+     ORDER BY day DESC`
   );
-  if (!rows.length) return 0;
-  let count = 1;
-  // 用本地日期字符串，避免 UTC 时区偏移
-  const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  for (let i = 1; i < rows.length; i++) {
-    const d2 = new Date(Date.now() - i * 86400000);
-    const expected = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`;
-    if (expected !== rows[i]?.day) break;
+  const activeDays = new Set(rows.map(row => String(row.day)));
+  let cursor = new Date();
+  if (!activeDays.has(localDateKey(cursor))) return 0;
+
+  let count = 0;
+  while (activeDays.has(localDateKey(cursor))) {
     count++;
+    cursor = shiftLocalDate(cursor, -1);
   }
-  return rows[0]?.day === today ? count : 0;
+  return count;
 }
 
 export async function getStageTypeCounts(stageId: string): Promise<Record<string, number>> {
