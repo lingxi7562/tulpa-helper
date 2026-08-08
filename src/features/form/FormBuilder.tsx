@@ -18,7 +18,7 @@ const SENSES = [
 type SenseType = typeof SENSES[number]['type'];
 
 export default function FormBuilder() {
-  const { formDetails, loadFormDetails, saveFormDetail, updateFormDetail, deleteFormDetail } = useFormStore();
+  const { formDetails, loadFormDetails, saveFormDetail, updateFormDetail, deleteFormDetail, loadError } = useFormStore();
   const { show } = useToast();
   const [activeSense, setActiveSense] = useState<SenseType>('visual');
   const [draft, setDraft] = useState('');
@@ -96,6 +96,13 @@ export default function FormBuilder() {
 
       {formDetails.length >= 3 && (
         <p className="mb-3 text-center text-[10px] text-emerald-600 font-bold">✨ 已有基础轮廓，可以开始了</p>
+      )}
+
+      {loadError && (
+        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">形态资料加载失败。</p>
+          <Button size="sm" variant="secondary" onClick={() => void loadFormDetails()} className="mt-2">重试</Button>
+        </div>
       )}
 
       <div className="mb-5 flex gap-1 overflow-x-auto rounded-2xl bg-brand-50 p-1">

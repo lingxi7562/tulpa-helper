@@ -5,6 +5,7 @@ import type { Trait } from '../db/schema';
 interface TraitState {
   traits: Trait[];
   loading: boolean;
+  loadError: boolean;
   loadTraits: () => Promise<void>;
   addTrait: (t: { name: string; description?: string; weight?: number }) => Promise<void>;
   removeTrait: (id: number) => Promise<void>;
@@ -14,13 +15,15 @@ interface TraitState {
 export const useTraitStore = create<TraitState>((set) => ({
   traits: [],
   loading: false,
+  loadError: false,
   loadTraits: async () => {
-    set({ loading: true });
+    set({ loading: true, loadError: false });
     try {
       const rows = await getTraits();
-      set({ traits: rows });
+      set({ traits: rows, loadError: false });
     } catch (error) {
       console.error(error);
+      set({ loadError: true });
     } finally {
       set({ loading: false });
     }
@@ -30,7 +33,7 @@ export const useTraitStore = create<TraitState>((set) => ({
     try {
       await createTrait(t);
       const rows = await getTraits();
-      set({ traits: rows });
+      set({ traits: rows, loadError: false });
     } catch (error) {
       console.error(error);
       throw error;
@@ -43,7 +46,7 @@ export const useTraitStore = create<TraitState>((set) => ({
     try {
       await deleteTrait(id);
       const rows = await getTraits();
-      set({ traits: rows });
+      set({ traits: rows, loadError: false });
     } catch (error) {
       console.error(error);
       throw error;
@@ -56,7 +59,7 @@ export const useTraitStore = create<TraitState>((set) => ({
     try {
       await updateTrait(id, fields);
       const rows = await getTraits();
-      set({ traits: rows });
+      set({ traits: rows, loadError: false });
     } catch (error) {
       console.error(error);
       throw error;

@@ -5,6 +5,7 @@ import type { FormDetail } from '../db/schema';
 interface FormState {
   formDetails: FormDetail[];
   loading: boolean;
+  loadError: boolean;
   loadFormDetails: () => Promise<void>;
   saveFormDetail: (sense_type: string, description: string) => Promise<void>;
   updateFormDetail: (id: number, description: string) => Promise<void>;
@@ -18,7 +19,7 @@ export const useFormStore = create<FormState>((set) => {
     try {
       await fn();
       const rows = await getFormDetails() as FormDetail[];
-      set({ formDetails: rows });
+      set({ formDetails: rows, loadError: false });
     } catch (error) {
       console.error(error);
       throw error;
@@ -30,13 +31,15 @@ export const useFormStore = create<FormState>((set) => {
   return {
     formDetails: [],
     loading: false,
+    loadError: false,
     loadFormDetails: async () => {
-      set({ loading: true });
+      set({ loading: true, loadError: false });
       try {
         const rows = await getFormDetails() as FormDetail[];
-        set({ formDetails: rows });
+        set({ formDetails: rows, loadError: false });
       } catch (error) {
         console.error(error);
+        set({ loadError: true });
       } finally {
         set({ loading: false });
       }

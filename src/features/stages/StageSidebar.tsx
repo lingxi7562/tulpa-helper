@@ -7,7 +7,7 @@ import { useToast } from '../../hooks/useToast';
 interface Props { onOpenStats: () => void; onNavigate?: () => void; }
 
 export default function StageSidebar({ onOpenStats, onNavigate }: Props) {
-  const { stages, activeStageId, setActiveStage, loadStages, unlock, loading } = useStageStore();
+  const { stages, activeStageId, setActiveStage, loadStages, unlock, loading, loadError } = useStageStore();
   const showToast = useToast(state => state.show);
   useEffect(() => { loadStages(); }, [loadStages]);
 
@@ -21,9 +21,15 @@ export default function StageSidebar({ onOpenStats, onNavigate }: Props) {
   };
 
   return (
-    <aside className="relative z-40 flex min-h-0 w-full flex-col overflow-hidden border-r border-brand-200/80 bg-white/58 backdrop-blur-md">
+    <aside aria-busy={loading} className="relative z-40 flex min-h-0 w-full flex-col overflow-hidden border-r border-brand-200/80 bg-white/58 backdrop-blur-md">
       <div className="overflow-y-auto px-2 py-5 sm:px-4 sm:py-7">
         <div className="mb-4 hidden items-center gap-2 px-3 sm:flex"><span className="h-px w-5 bg-brand-300" /><span className="eyebrow">成长旅程</span></div>
+        {loadError && !loading && (
+          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50/70 p-3">
+            <p role="alert" className="text-[11px] font-bold leading-5 text-red-600">阶段列表加载失败。</p>
+            <Button size="sm" variant="secondary" onClick={() => void loadStages()} className="mt-2 w-full">重试</Button>
+          </div>
+        )}
         <nav className="space-y-2" aria-label="成长阶段">
           {stages.map((stage) => {
             const info = STAGES[stage.id as keyof typeof STAGES];

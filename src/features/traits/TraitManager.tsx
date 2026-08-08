@@ -29,7 +29,7 @@ function nextTierWeight(weight: number) {
 }
 
 export default function TraitManager() {
-  const { traits, addTrait, removeTrait, updateTrait } = useTraitStore();
+  const { traits, addTrait, removeTrait, updateTrait, loadTraits, loadError } = useTraitStore();
   const showToast = useToast(state => state.show);
   const [name, setName] = useState('');
   const [weight, setWeight] = useState(5);
@@ -94,6 +94,13 @@ export default function TraitManager() {
         </div>
         <Badge variant="prep">{traits.length} 项</Badge>
       </div>
+
+      {loadError && (
+        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50/70 p-3">
+          <p role="alert" className="text-xs font-bold text-red-600">特质资料加载失败。</p>
+          <Button size="sm" variant="secondary" onClick={() => void loadTraits()} className="mt-2">重试</Button>
+        </div>
+      )}
 
       <div className="mb-5 space-y-2">
         {traits.length ? traits.map(trait => (

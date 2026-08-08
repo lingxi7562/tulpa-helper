@@ -6,6 +6,7 @@ interface StageState {
   stages: Stage[];
   activeStageId: string;
   loading: boolean;
+  loadError: boolean;
   loadStages: () => Promise<boolean>;
   setActiveStage: (id: string) => void;
   unlock: (id: string) => Promise<boolean>;
@@ -15,7 +16,7 @@ interface StageState {
 export const useStageStore = create<StageState>((set, get) => {
   // 私有 helper：执行锁定状态变更后重载阶段（原始 unlock/lock 行为：catch 不 rethrow）
   const setStageLocked = async (fn: () => Promise<void>): Promise<boolean> => {
-    set({ loading: true });
+    set({ loading: true, loadError: false });
     try {
       await fn();
       if (!(await get().loadStages())) return false;
@@ -32,14 +33,16 @@ export const useStageStore = create<StageState>((set, get) => {
     stages: [],
     activeStageId: 'prep',
     loading: false,
+    loadError: false,
     loadStages: async () => {
-      set({ loading: true });
+      set({ loading: true, loadError: false });
       try {
         const rows = await getStages();
-        set({ stages: rows });
+        set({ stages: rows, loadError: false });
         return true;
       } catch (error) {
         console.error(error);
+        set({ loadError: true });
         return false;
       } finally {
         set({ loading: false });

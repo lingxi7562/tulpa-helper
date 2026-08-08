@@ -11,24 +11,104 @@ interface BackupFile extends DatabaseBackup {
   profile: { tulpaName: string; relationshipCompass?: string | null };
 }
 
+const ENTRY_TYPES = new Set([
+  'trait', 'form', 'session', 'narration', 'devotion', 'dialogue', 'wonderland', 'signal',
+  'imposition', 'switch', 'design', 'dialogue_session', 'practice', 'autonomy', 'resonance',
+]);
+const SENSE_TYPES = new Set(['visual', 'audio', 'smell', 'touch', 'taste']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isInteger(value: unknown, minimum = Number.MIN_SAFE_INTEGER, maximum = Number.MAX_SAFE_INTEGER): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= minimum && value <= maximum;
+}
+
+function isString(value: unknown, maximum = 100_000): value is string {
+  return typeof value === 'string' && value.length <= maximum;
+}
+
+function isNullableString(value: unknown, maximum = 100_000): value is string | null {
+  return value === null || isString(value, maximum);
+}
+
 function isBackupFile(value: unknown): value is BackupFile {
   if (!value || typeof value !== 'object') return false;
   const file = value as Partial<BackupFile>;
   const profile = file.profile as Partial<BackupFile['profile']> | undefined;
-  const collections = [file.stages, file.entries, file.dialogueMessages, file.traits, file.formDetails, file.deviations, file.milestones, file.impositionLevels];
+  const stages = file.stages;
+  const entries = file.entries;
+  const dialogueMessages = file.dialogueMessages;
+  const traits = file.traits;
+  const formDetails = file.formDetails;
+  const deviations = file.deviations;
+  const milestones = file.milestones;
+  const impositionLevels = file.impositionLevels;
+  const collections = [stages, entries, dialogueMessages, traits, formDetails, deviations, milestones, impositionLevels];
+  if (!Array.isArray(stages) || !Array.isArray(entries) || !Array.isArray(dialogueMessages)
+    || !Array.isArray(traits) || !Array.isArray(formDetails) || !Array.isArray(deviations)
+    || !Array.isArray(milestones) || !Array.isArray(impositionLevels)) return false;
+  if (!collections.every(collection => collection.length <= 100_000)) return false;
+
   return file.format === 'tulpa-helper-backup'
     && file.version === 1
-    && typeof file.exportedAt === 'string'
-    && typeof profile?.tulpaName === 'string'
-    && collections.every(collection => Array.isArray(collection) && collection.length <= 100_000)
-    && Array.isArray(file.stages)
-    && Array.isArray(file.entries)
-    && Array.isArray(file.dialogueMessages)
-    && Array.isArray(file.traits)
-    && Array.isArray(file.formDetails)
-    && Array.isArray(file.deviations)
-    && Array.isArray(file.milestones)
-    && Array.isArray(file.impositionLevels);
+    && isString(file.exportedAt, 100)
+    && !Number.isNaN(Date.parse(file.exportedAt))
+    && isString(profile?.tulpaName, 40)
+    && (profile?.relationshipCompass == null || isString(profile.relationshipCompass, 20_000))
+    && stages.every(stage => isRecord(stage)
+      && isString(stage.id, 40)
+      && isString(stage.name, 100)
+      && isInteger(stage.order, 0)
+      && isString(stage.description, 10_000)
+      && isNullableString(stage.unlocked_at, 100))
+    && entries.every(entry => isRecord(entry)
+      && isInteger(entry.id, 1)
+      && isString(entry.stage_id, 40)
+      && isString(entry.type, 40)
+      && ENTRY_TYPES.has(entry.type)
+      && isString(entry.title, 10_000)
+      && isString(entry.content, 100_000)
+      && isString(entry.tags, 100_000)
+      && isString(entry.created_at, 100)
+      && isInteger(entry.duration_seconds, 0)
+      && (entry.mood === null || isInteger(entry.mood, -100, 100)))
+    && dialogueMessages.every(message => isRecord(message)
+      && isInteger(message.id, 1)
+      && isInteger(message.entry_id, 1)
+      && isString(message.speaker, 10)
+      && (message.speaker === 'self' || message.speaker === 'tulpa')
+      && isString(message.content, 100_000)
+      && isInteger(message.seq, 0))
+    && traits.every(trait => isRecord(trait)
+      && isInteger(trait.id, 1)
+      && isString(trait.name, 200)
+      && isString(trait.description, 10_000)
+      && isInteger(trait.weight, 1, 10)
+      && isString(trait.category, 200))
+    && formDetails.every(detail => isRecord(detail)
+      && isInteger(detail.id, 1)
+      && isString(detail.sense_type, 20)
+      && SENSE_TYPES.has(detail.sense_type)
+      && isString(detail.description, 100_000))
+    && deviations.every(deviation => isRecord(deviation)
+      && isInteger(deviation.id, 1)
+      && isString(deviation.target_type, 20)
+      && (deviation.target_type === 'trait' || deviation.target_type === 'form')
+      && isInteger(deviation.target_id, 1)
+      && isString(deviation.note, 100_000)
+      && isString(deviation.created_at, 100))
+    && milestones.every(milestone => isRecord(milestone)
+      && isInteger(milestone.id, 1)
+      && isString(milestone.stage_id, 40)
+      && isString(milestone.title, 10_000)
+      && isNullableString(milestone.achieved_at, 100)
+      && isString(milestone.notes, 100_000))
+    && impositionLevels.every(level => isRecord(level)
+      && isString(level.sense_type, 20)
+      && SENSE_TYPES.has(level.sense_type)
+      && isInteger(level.level, 1, 10));
 }
 
 function readCompassPreference(): string | null {
