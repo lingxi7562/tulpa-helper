@@ -9,6 +9,7 @@ import { Textarea } from '../../components/ui/Input';
 import Input from '../../components/ui/Input';
 import type { Entry } from '../../db/schema';
 import { useToast } from '../../hooks/useToast';
+import PracticeGuardrail from './PracticeGuardrail';
 
 const BODY_PARTS = ['手部', '手臂', '头部', '全身', '其他'];
 
@@ -23,6 +24,7 @@ export default function PossessionLog({ onSaved }: Props) {
   const [part, setPart] = useState('手部');
   const [customPart, setCustomPart] = useState('');
   const [notes, setNotes] = useState('');
+  const [consent, setConsent] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -37,7 +39,7 @@ export default function PossessionLog({ onSaved }: Props) {
   useEffect(() => { load(); }, [load]);
 
   const handleSave = async () => {
-    if (!notes.trim() || saving) return;
+    if (!notes.trim() || !consent || saving) return;
     setSaving(true);
     try {
       const content = notes.trim();
@@ -45,12 +47,13 @@ export default function PossessionLog({ onSaved }: Props) {
       await addEntry({
         stage_id: activeStageId,
         type: 'practice',
-        title: `附身练习 · ${finalPart}`,
+        title: `身体协作练习 · ${finalPart}`,
         content,
         tags: JSON.stringify(['possession', `part:${finalPart}`]),
       });
       setNotes('');
       setCustomPart('');
+      setConsent(false);
       await load();
       onSaved?.();
     } catch (error) { console.error(error); showToast('身体练习记录保存失败，请重试'); }
@@ -60,7 +63,7 @@ export default function PossessionLog({ onSaved }: Props) {
   return (
     <Card hoverable={false}>
       <div className="mb-5 flex items-start justify-between gap-4">
-        <div><h3 className="font-black text-brand-900">附身练习</h3><p className="mt-1 text-xs leading-6 text-brand-400">收集合作与控制练习的进展。</p></div>
+        <div><h3 className="font-black text-brand-900">身体协作练习</h3><p className="mt-1 text-xs leading-6 text-brand-400">记录在保持清醒与可停止的前提下，和 Ta 一起尝试身体动作或表达。</p></div>
         <Badge variant="mature">{logs.length} 次</Badge>
       </div>
       {loadError && (
@@ -74,7 +77,7 @@ export default function PossessionLog({ onSaved }: Props) {
           {(showAll ? logs : logs.slice(0, 8)).map(log => (
             <div key={log.id} className="rounded-2xl border border-purple-100 bg-purple-50/50 p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-black text-brand-700">{log.title}</p>
+                <p className="text-xs font-black text-brand-700">{log.title.replace(/^附身练习/, '身体协作练习')}</p>
                 <span className="text-[10px] text-purple-400">{log.created_at?.slice(5, 16)}</span>
               </div>
               {log.content && <p className="mt-1 text-xs leading-5 text-brand-600">{log.content}</p>}
@@ -113,9 +116,10 @@ export default function PossessionLog({ onSaved }: Props) {
           />
         )}
         <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="练习部位与进展…" disabled={saving} className="min-h-16" />
-        <Button size="sm" onClick={handleSave} disabled={!notes.trim() || saving}>{saving ? '保存中…' : '记录'}</Button>
+        <PracticeGuardrail label="身体协作" checked={consent} onChange={setConsent} />
+        <Button size="sm" onClick={handleSave} disabled={!notes.trim() || !consent || saving}>{saving ? '保存中…' : '记录'}</Button>
         <p className="mt-2 text-[10px] leading-relaxed text-amber-600">
-          ⚠ 若出现持续不真实感、失控感或日常功能受影响，请暂停练习并寻求专业帮助。
+          ⚠ 若出现持续不真实感、失控感或日常功能受影响，请暂停练习并寻求可信任的人或专业支持。
         </p>
       </div>
     </Card>

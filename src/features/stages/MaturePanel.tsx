@@ -218,6 +218,10 @@ export default function MaturePanel() {
         </p>
       </Card>
 
+      <Card hoverable={false} className="border-sky-200/70 bg-sky-50/35">
+        <h3 className="font-black text-brand-900">可选的表达路径</h3>
+        <p className="mt-1 text-xs leading-6 text-brand-500">视角切换和身体协作都不是关系的毕业条件。社区里有人从不练习它们，也有人只做短暂、部分或混合的尝试；选择适合你们的方式即可。</p>
+      </Card>
       <SwitchingLog onSaved={refresh} />
       <PossessionLog onSaved={refresh} />
 
