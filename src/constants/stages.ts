@@ -17,19 +17,19 @@ export interface SessionTypeOption {
 export const SESSION_TYPES_BY_STAGE: Record<StageId, readonly SessionTypeOption[]> = {
   prep: [
     { label: '蓝图设计', value: 'design' },
-    { label: '日常交流 (Narration)', value: 'narration' },
+    { label: '日常叙述', value: 'narration' },
   ],
   create: [
-    { label: 'Narration', value: 'narration' },
-    { label: 'Active Forcing', value: 'session' },
+    { label: '日常叙述', value: 'narration' },
+    { label: '专注陪伴', value: 'session' },
   ],
   dev: [
-    { label: '对话会话', value: 'dialogue_session' },
+    { label: '直接对话', value: 'dialogue_session' },
   ],
   mature: [
-    { label: 'Imposition', value: 'imposition' },
-    { label: 'Switching', value: 'switch' },
-    { label: 'Possession', value: 'practice' },
+    { label: '感官临场', value: 'imposition' },
+    { label: '视角切换', value: 'switch' },
+    { label: '身体协作', value: 'practice' },
   ],
 };
 

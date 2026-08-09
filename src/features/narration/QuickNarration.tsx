@@ -46,7 +46,7 @@ export default function QuickNarration() {
         placeholder="今天和 Ta 聊了..."
         disabled={saving}
         className="min-w-0 flex-1 bg-transparent px-2 text-xs text-brand-700 outline-none placeholder:text-brand-300"
-        aria-label="快速记录被动 forcing 叙述"
+        aria-label="快速记录日常陪伴"
       />
       <button
         type="button"

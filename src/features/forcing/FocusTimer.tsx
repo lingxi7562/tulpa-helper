@@ -96,9 +96,9 @@ export default function FocusTimer({ compact = false }: Props) {
           </svg>
           <div className={`absolute inset-6 rounded-full border border-brand-200/60 ${isRunning ? 'animate-[breathe_3s_ease-in-out_infinite]' : ''}`} />
           <div className="relative text-center">
-            <p className="eyebrow">沉浸专注</p>
+            <p className="eyebrow">陪伴练习</p>
             <strong className="mt-1 block text-4xl tracking-[-.06em] text-brand-900 tabular-nums">{formatTime(timeLeft)}</strong>
-            <p className="mt-1 text-[10px] text-brand-400">{isRunning ? '保持呼吸，留在此刻' : phase === 'paused' ? '已暂停，按自己的节奏继续' : '准备好便开始吧'}</p>
+            <p className="mt-1 text-[10px] text-brand-400">{isRunning ? '保持呼吸，和 Ta 一起留在此刻' : phase === 'paused' ? '已暂停，按自己的节奏继续' : '准备好便开始吧；不开始也没关系'}</p>
           </div>
         </div>
         <div className="flex gap-3">

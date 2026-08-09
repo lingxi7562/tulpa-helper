@@ -91,7 +91,7 @@ export default function MaturePanel() {
           <div>
             <Badge variant="mature">CHAPTER 04</Badge>
             <h1 className="mt-3 text-2xl font-black text-brand-900 sm:text-3xl">{STAGES.mature.name}</h1>
-            <p className="mt-1 text-sm leading-6 text-brand-500">并肩探索高阶练习，也认真珍惜平凡的日常。</p>
+            <p className="mt-1 text-sm leading-6 text-brand-500">可以探索更多表达方式，也可以只珍惜平凡的日常；这里没有毕业要求。</p>
           </div>
         </div>
       </Card>
@@ -100,8 +100,8 @@ export default function MaturePanel() {
 
       <Card hoverable={false}>
         <div className="mb-5">
-          <h3 className="font-black text-brand-900">Imposition 感官练习</h3>
-          <p className="mt-1 text-xs text-brand-400">一次只专注一种感受，缓慢建立清晰度。</p>
+          <h3 className="font-black text-brand-900">感官临场练习</h3>
+          <p className="mt-1 text-xs text-brand-400">这是可选的想象与临场感练习；一次只探索一种感受，不追求“看见”或“听见”的证明。</p>
         </div>
         <FormSummary embedded />
         {levelsError && (
@@ -157,7 +157,7 @@ export default function MaturePanel() {
           })}
         </div>
 
-        {/* 扩展感官（嗅觉/味觉）：社区实践中极少使用，默认折叠以避免无谓压力 */}
+        {/* 扩展感官（嗅觉/味觉）：默认折叠，按个人兴趣选择即可 */}
         <button
           onClick={() => setShowExtendedSenses(v => !v)}
           className="mt-3 text-[10px] font-bold text-purple-400 hover:text-purple-600"
@@ -212,9 +212,9 @@ export default function MaturePanel() {
             })}
           </div>
         )}
-        {/* 循序渐进：倾听身体信号，避免过度练习 */}
+        {/* 循序渐进：倾听身体信号，避免把练习当成考核 */}
         <p className="mt-3 text-[10px] leading-relaxed text-amber-600">
-          ⚠ 循序渐进，倾听身体信号。若感到压力或不适，请放慢节奏——过度练习可能导致倦怠。
+          ⚠ 循序渐进，倾听身体信号。若感到压力或不适，请放慢节奏或停止；这些练习不是能力、关系或“真实性”的测试。
         </p>
       </Card>
 

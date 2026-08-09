@@ -61,8 +61,8 @@ export default function PrepPanel() {
             这是健康的、预期内的发展，不是失败。记录下这些变化，它们是真正的里程碑。
           </li>
           <li>
-            <span className="font-bold text-amber-600">日常交流比专注练习更重要。</span>
-            随时随地的一句话、一个念头，都是珍贵的连接。Narration 不需要仪式，只需要在场。
+            <span className="font-bold text-amber-600">日常交流和专注练习都可以成为陪伴。</span>
+            没有哪一种是必须完成的；随时随地的一句话、一个念头，都是珍贵的连接。
           </li>
         </ul>
       </Card>
