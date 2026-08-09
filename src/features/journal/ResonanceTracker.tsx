@@ -8,7 +8,7 @@ import Badge from '../../components/ui/Badge';
 import { useToast } from '../../hooks/useToast';
 import type { Entry } from '../../db/schema';
 
-const MOOD_LABELS = ['', '很淡', '轻微', '中等', '明显', '强烈'];
+const MOOD_LABELS = ['', '很淡', '轻微', '中等', '明显', '强烈'] as const;
 const WEEKS_TO_SHOW = 8;
 const DAYS_TO_FETCH = WEEKS_TO_SHOW * 7;
 
@@ -130,26 +130,28 @@ export default function ResonanceTracker() {
       )}
 
       <div className="mb-5">
-        <p className="text-[11px] font-bold text-brand-500 mb-3">本周共振强度</p>
-        <div className="flex items-center gap-2">
+        <p className="mb-1 text-[11px] font-bold text-brand-500">本周的相处感受</p>
+        <p className="mb-3 text-[10px] text-brand-400">选择最接近的词即可；这不是测试分数。</p>
+        <div className="grid grid-cols-5 gap-1.5">
           {[1, 2, 3, 4, 5].map(level => (
             <button
               key={level}
               onClick={() => setMood(level)}
-              className={`grid h-10 w-10 place-items-center rounded-xl text-xs font-bold transition-all ${
+              aria-label={`选择${MOOD_LABELS[level]}的感受`}
+              aria-pressed={mood === level}
+              className={`min-h-10 rounded-xl px-1 text-[10px] font-bold transition-all ${
                 mood === level
                   ? 'bg-blue-500 text-white shadow-[0_6px_16px_rgba(59,130,246,.25)]'
                   : 'border border-brand-200 bg-white text-brand-500 hover:border-blue-300'
               }`}
-              title={MOOD_LABELS[level]}
             >
-              {level}
+              {MOOD_LABELS[level]}
             </button>
           ))}
         </div>
         <div className="mt-2 flex items-center justify-between text-[10px] text-brand-400">
           <span>微弱</span>
-          <span className="font-bold text-blue-500">{MOOD_LABELS[mood]}</span>
+          <span className="font-bold text-blue-500">当前：{MOOD_LABELS[mood]}</span>
           <span>强烈</span>
         </div>
         <Button size="sm" className="mt-3" onClick={handleSave} disabled={saving}>
@@ -158,7 +160,7 @@ export default function ResonanceTracker() {
       </div>
 
       <div>
-        <p className="text-[11px] font-bold text-brand-500 mb-3">近 8 周趋势</p>
+        <p className="mb-3 text-[11px] font-bold text-brand-500">近 8 周记录</p>
         <div className="flex h-28 items-end gap-2 rounded-2xl bg-brand-50/75 px-3 pb-3 pt-5">
           {Array.from({ length: WEEKS_TO_SHOW }, (_, i) => {
             const weekStart = new Date(currentWeekStart);
@@ -169,11 +171,12 @@ export default function ResonanceTracker() {
             const height = value ? Math.max(8, (value / 5) * 100) : 0;
             return (
               <div key={key} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-                <span className="text-[9px] font-bold text-blue-600">{value || ''}</span>
+                <span className="text-[8px] font-bold text-blue-600">{value ? MOOD_LABELS[value] : ''}</span>
                 {value > 0 ? (
                   <div
                     className="w-full max-w-8 rounded-t-lg bg-blue-500 shadow-sm"
                     style={{ height: `${height}%` }}
+                    aria-label={`${isoWeekLabel(weekStart)}：${MOOD_LABELS[value]}`}
                   />
                 ) : (
                   <div className="w-full max-w-8 rounded-t-lg bg-brand-100/60" style={{ height: '3px' }} title="未记录" />
