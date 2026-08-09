@@ -48,7 +48,6 @@ UI (React 组件)
 | `imposition_levels` | Imposition 等级 | sense_type(PK), level(1-10) |
 
 `EntryType`(**15 种**,schema.ts:2-6 为准):`trait form session narration devotion dialogue wonderland signal imposition switch design dialogue_session practice autonomy resonance`。
-(注:AGENTS.md 的 EntryType 列表仍为 13 种,缺 `autonomy`/`resonance`,待修。)
 
 ## DB API(src/db/database.ts,~40 个导出)
 
@@ -130,20 +129,19 @@ Button / Card / Input / Badge / IconButton / Toast / Heatmap / EntryForm — 均
 
 ## 文档与变更历史
 
-- `AGENTS.md` — 权威约定文档(含 11 条 Android CI 血泪教训;EntryType 列表待同步 15 种)
+- `AGENTS.md` — 权威约定文档(含 11 条 Android CI 经验;EntryType 列表与 schema.ts 同步为 15 种)
 - `AUDIT-2026-07-26.md` — 全功能审计:28/28 🔴 修复,~40/66 🟡 修复,末节「修复记录」含 audit-batch1~7
 - `docs/superpowers/` — specs/plans(如 2026-07-28 desketching 设计)
 - 近期提交:`f51539e fix(audit-batch7)`(A 类遗留 🟡 21 项 + 落盘 + 删除 README)→ `fix(audit-batch6)`(时区 localtime、里程碑入库、loadAllEntries 2000 上限)→ `fix(audit-batch1~5)` → `feat: milestone celebration confetti`
 - Android 工程 `src-tauri/gen/android/` 已入库(065ee01)
 
-## 已知待办
+## 后续可选增强
 
 - ✅ 2026-07-31 audit-batch7:A 类遗留 🟡 21 项全部修复(详见 AUDIT-2026-07-26.md「修复记录」)
-- ⏳ B 类产品方向 6 项待决策:创建期计数卡片 P6 张力、StatsPanel 文案矛盾、历程概览重复、tags JSON 技术债、imposition 历史轨迹、长页面折叠
-- Form 构建器详细编辑(五感表单 + 参考图)— 部分完成(FormBuilder 已有)
-- Wonderland 富文本编辑器 — 部分完成(WonderlandEditor 已有,复杂度 19 建议重构)
-- 情感共振柱状图交互、Switching/Possession 进度完善、日常陪伴热力图(周视图 + 断档标记)
-- iOS 打包、数据导入/导出、虚拟滚动(>500 条记录时)
+- ✅ 本轮已补齐本地 JSON 备份合并、时间线搜索、加载失败重试、关系安全检查、计时器持久化与数据迁移门禁
+- 产品体验候选:创建期计数卡片、StatsPanel 文案统一、历程概览去重、tags 结构化存储、imposition 历史轨迹、长页面折叠
+- Form/Wonderland 编辑器仍可继续做细节增强；当前版本已提供可用的五感表单与 Wonderland 编辑器
+- 情感共振图表交互、Switching/Possession 进度、日常陪伴热力图(iOS/移动端适配)可按用户反馈迭代
 
 ## 图谱使用指引(codebase-memory-mcp)
 
