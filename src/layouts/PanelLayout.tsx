@@ -19,7 +19,7 @@ export default function PanelLayout({ onOpenStats }: Props) {
       case 'create': return <CreationPanel />;
       case 'dev': return <DevelopmentPanel />;
       case 'mature': return <MaturePanel />;
-      default: return <div className="panel-page"><Card><p className="text-sm text-brand-500">选择或解锁一个阶段，继续这段旅程。</p></Card></div>;
+      default: return <div className="panel-page"><Card><p className="text-sm text-brand-500">选择一个章节，继续这段旅程。</p></Card></div>;
     }
   };
 
