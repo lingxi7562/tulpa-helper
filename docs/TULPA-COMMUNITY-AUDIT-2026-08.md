@@ -9,7 +9,7 @@
 |---|---|---|
 | 关系而非制造 | [Tulpa.io forcing basics](https://tulpa.io/forcing-basics-v-0-90) 强调 bonding、兴趣和自主性，不要按小时或固定速度比较，也不要急于设定关系形式。 | 用户可记录陪伴和练习，但数字不是进展证明；forcing 只作为历史代码名，不作为主要界面词。 |
 | 方法没有单一答案 | [Tulpa.info FAQ](https://www.tulpa.info/faq/) 说明没有唯一最佳方法，wonderland 和 visualization 都不是必需品。 | 表单、wonderland、叙述、对话、计时器都应是菜单，不应成为解锁条件。 |
-| 努力与自动反应 | [Pragmatic Tulpamancers 术语表](https://tulpa.guide/dictionary/) 将 effortful/effortless engagement 都视为有效，反对把不确定性称为污染或失败。 | “回应迹象”先观察、不下结论；后续记录器应允许“我主动构造/回应自行出现/不确定”等描述。 |
+| 努力与自动反应 | [Pragmatic Tulpamancers 术语表](https://tulpa.guide/dictionary/) 将 effortful/effortless engagement 都视为有效，反对把不确定性称为污染或失败。 | “回应迹象”先观察、不下结论；现在可用“主动构造/自发出现/不确定”三态描述，标签不作真实性判断。 |
 | 换位与身体练习 | 同一术语表把 switching 解释为可部分、可混合的视角关联，且明确可选；[Tulpa.info further development](https://www.tulpa.info/further-development/) 也强调同意和可回收控制。 | 不以黑屏、失忆或完全失控为目标；开始前明确安全环境、同意和暂停路径；时长可不填。 |
 | 感官临场 | 社区通常把 imposition 视作想象/临场感技能，而不是对外界的物理证明；[Tulpa.io terminology](https://tulpa.io/terminologies) 记录了传统术语。 | 用“感官临场”描述练习，不承诺真实看见、听见或物理显现。 |
 | 语境多样 | [Pragmatic FAQ](https://tulpa.guide/faq/) 与 [Tulpa.info what is a tulpa](https://www.tulpa.info/what-is-a-tulpa/) 展示了实践/心理、plurality、灵性或象征等不同语境。 | 提供“暂不设定、以实践为主、使用多元语言、灵性或象征”本地偏好，但不把任何选项当事实。 |
@@ -30,7 +30,7 @@
 - [x] 本地实践视角选择及备份恢复。
 - [x] 可选技巧的同意、暂停和现实感安全护栏。
 - [x] 时间统计与庆祝解耦，时间标记默认关闭。
-- [ ] 在“回应迹象/对话”记录中增加“主动构造 / 自发出现 / 不确定”三态（不做真假判定），并审计导出格式兼容性。
+- [x] 在“回应迹象”记录中增加“主动构造 / 自发出现 / 不确定”三态；标签沿用 entries.tags，旧备份格式仍兼容。
 - [ ] 将四个章节进一步表现为可回访的探索路径，减少“成熟/毕业”暗示，同时保留用户按阶段筛选记录的能力。
 - [ ] 为关系罗盘和练习护栏补充键盘焦点、屏幕阅读器和窄屏视觉审计；仍只在 GitHub Actions 中构建验证。
 - [ ] 为纯函数（日期、对话解析、备份校验、术语映射）补充前端单元测试，并纳入现有 source-quality 门禁。
