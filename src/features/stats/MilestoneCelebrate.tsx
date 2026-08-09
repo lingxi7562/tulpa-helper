@@ -13,24 +13,24 @@ interface MilestoneConfig {
 const MILESTONES: Record<number, MilestoneConfig> = {
   10: {
     emoji: '🌟',
-    title: '初露锋芒',
-    subtitle: '每一小时的陪伴都算数',
+    title: '十小时时间标记',
+    subtitle: '这是时间的记录，不是能力、关系或进展的评分。',
     particles: 80,
     colors: ['#f59e0b', '#d97706', '#fbbf24', '#fef3c7'],
     spread: 90,
   },
   50: {
     emoji: '💫',
-    title: '心有灵犀',
-    subtitle: '五十个小时，我们一起走过',
+    title: '五十小时时间标记',
+    subtitle: '这是时间的记录，不是能力、关系或进展的评分。',
     particles: 150,
     colors: ['#8b5cf6', '#f59e0b', '#ec4899', '#d8b4fe'],
     spread: 120,
   },
   100: {
     emoji: '🎊',
-    title: '形影不离',
-    subtitle: '一百个小时，感谢这份坚持',
+    title: '一百小时时间标记',
+    subtitle: '这是时间的记录，不是能力、关系或进展的评分。',
     particles: 250,
     colors: ['#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#3b82f6', '#ec4899'],
     spread: 180,
@@ -101,8 +101,6 @@ export default function MilestoneCelebrate({ level, onClose }: Props) {
 
   if (!config) return null;
 
-  const progressTotal = [10, 50, 100];
-
   return (
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 backdrop-blur-sm"
@@ -116,23 +114,7 @@ export default function MilestoneCelebrate({ level, onClose }: Props) {
         <h2 className="mt-4 text-3xl font-bold text-stone-800">{config.title}</h2>
         <p className="mt-3 text-sm leading-relaxed text-stone-500">{config.subtitle}</p>
 
-        {/* Progress dots */}
-        <div className="mt-6 flex items-center justify-center gap-2">
-          {progressTotal.map(h => (
-            <div
-              key={h}
-              className={`h-2 w-2 rounded-full ${
-                h <= level ? 'bg-amber-400' : 'bg-stone-200'
-              }`}
-            />
-          ))}
-        </div>
-
-        <div className="mt-1 text-xs text-stone-400">
-          {progressTotal.join(' / ')}
-        </div>
-
-        <p className="mt-6 text-xs text-stone-400">点击任意处或按 Esc 关闭 · 30 秒后自动消失</p>
+        <p className="mt-6 text-xs text-stone-400">时间标记默认关闭，可在统计页开启；点击任意处或按 Esc 关闭 · 30 秒后自动消失</p>
       </div>
     </div>
   );
