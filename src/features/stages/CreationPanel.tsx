@@ -33,7 +33,7 @@ export default function CreationPanel() {
     { icon: '⏱', label: '专注会话', value: stats.sessions, unit: '次' },
     { icon: '💬', label: '对话记录', value: stats.dialogue, unit: '条' },
     { icon: '⚡', label: '回应迹象', value: stats.signals, unit: '次' },
-    { icon: '🔥', label: '连续坚持', value: consecutiveDays > 0 ? consecutiveDays : '—', unit: consecutiveDays > 0 ? '天' : '统计中' },
+    { icon: '◷', label: '连续记录', value: consecutiveDays > 0 ? consecutiveDays : '—', unit: consecutiveDays > 0 ? '天有记录' : '统计中' },
   ];
   return (
     <div className="panel-page space-y-5">
