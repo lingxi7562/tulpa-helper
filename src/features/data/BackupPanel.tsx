@@ -18,6 +18,10 @@ const ENTRY_TYPES = new Set([
 const SENSE_TYPES = new Set(['visual', 'audio', 'smell', 'touch', 'taste']);
 const PRACTICE_FRAMES = new Set(PRACTICE_FRAME_OPTIONS.map(option => option.value));
 
+function isPracticeFrame(value: unknown): value is PracticeFrame {
+  return typeof value === 'string' && PRACTICE_FRAMES.has(value as PracticeFrame);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
@@ -57,7 +61,7 @@ function isBackupFile(value: unknown): value is BackupFile {
     && isString(file.exportedAt, 100)
     && !Number.isNaN(Date.parse(file.exportedAt))
     && isString(profile?.tulpaName, 40)
-    && (profile?.practiceFrame == null || (isString(profile.practiceFrame, 30) && PRACTICE_FRAMES.has(profile.practiceFrame)))
+    && (profile?.practiceFrame == null || isPracticeFrame(profile.practiceFrame))
     && (profile?.relationshipCompass == null || isString(profile.relationshipCompass, 20_000))
     && stages.every(stage => isRecord(stage)
       && isString(stage.id, 40)
@@ -168,8 +172,8 @@ export default function BackupPanel() {
       if (!isBackupFile(parsed)) throw new Error('Invalid Tulpa Helper backup');
       await importDatabaseSnapshot(parsed);
       if (parsed.profile.tulpaName.trim()) useProfileStore.getState().setTulpaName(parsed.profile.tulpaName);
-      if (typeof parsed.profile.practiceFrame === 'string' && PRACTICE_FRAMES.has(parsed.profile.practiceFrame)) {
-        useProfileStore.getState().setPracticeFrame(parsed.profile.practiceFrame as PracticeFrame);
+      if (isPracticeFrame(parsed.profile.practiceFrame)) {
+        useProfileStore.getState().setPracticeFrame(parsed.profile.practiceFrame);
       }
       if (typeof parsed.profile.relationshipCompass === 'string') {
         try { localStorage.setItem('relationship-compass-v1', parsed.profile.relationshipCompass); }
