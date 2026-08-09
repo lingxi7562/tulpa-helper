@@ -9,13 +9,15 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import CommitmentConfirm from '../journal/CommitmentConfirm';
 import Input from '../../components/ui/Input';
-import { useProfileStore } from '../../stores/useProfileStore';
+import { PRACTICE_FRAME_OPTIONS, useProfileStore } from '../../stores/useProfileStore';
 import RelationshipCompass from '../relationship/RelationshipCompass';
 
 export default function PrepPanel() {
   const { loadTraits } = useTraitStore();
   const tulpaName = useProfileStore(state => state.tulpaName);
   const setTulpaName = useProfileStore(state => state.setTulpaName);
+  const practiceFrame = useProfileStore(state => state.practiceFrame);
+  const setPracticeFrame = useProfileStore(state => state.setPracticeFrame);
   const [nameDraft, setNameDraft] = useState(tulpaName);
   useEffect(() => { loadTraits(); }, [loadTraits]);
   return (
@@ -43,6 +45,29 @@ export default function PrepPanel() {
           placeholder="输入名字（可稍后决定）"
           maxLength={40}
         />
+      </Card>
+      <Card hoverable={false} className="border-sky-200/70 bg-sky-50/35">
+        <div>
+          <h3 className="font-black text-brand-900">你的实践视角（可随时改变）</h3>
+          <p className="mt-1 text-xs leading-6 text-brand-500">
+            社区里有不同的理解方式：有人关注心理与实践，有人使用多元语言，也有人保留灵性或象征解释。这里不要求你证明任何一种模型；选择只会保存在本地，方便你保持自己的语境。
+          </p>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {PRACTICE_FRAME_OPTIONS.map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setPracticeFrame(option.value)}
+              aria-pressed={practiceFrame === option.value}
+              className={`rounded-xl border px-3 py-2 text-left transition ${practiceFrame === option.value ? 'border-sky-300 bg-sky-100 text-sky-900 ring-1 ring-sky-200' : 'border-brand-200 bg-white text-brand-600 hover:border-sky-200 hover:bg-sky-50'}`}
+            >
+              <span className="block text-xs font-bold">{option.label}</span>
+              <span className="mt-1 block text-[10px] leading-5 opacity-75">{option.hint}</span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-[10px] leading-5 text-brand-400">它不会解锁或锁定任何功能，也不构成诊断、治疗或事实判断。</p>
       </Card>
       <TraitManager />
       <FormBuilder />
