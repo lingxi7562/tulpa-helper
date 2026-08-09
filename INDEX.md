@@ -1,6 +1,6 @@
 # Tulpa Helper — 项目索引(图谱版)
 
-> 复核于 2026-08-09 · 基于 `master` @ 8445e39
+> 复核于 2026-08-09 · 基于 `master` @ ecdee03
 > 知识图谱:597 nodes / 1405 edges(codebase-memory-mcp,项目名 `mnt-d-opencode-tulpa-helper`)
 > 注意:**README.md 已删除**(f51539e),以本索引与 `AGENTS.md` 为准。
 
