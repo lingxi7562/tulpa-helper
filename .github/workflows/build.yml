@@ -232,13 +232,31 @@ jobs:
       - name: Init Android project
         run: npx tauri android init --ci
 
-      - name: Build Android APK (debug, aarch64)
-        run: npx tauri android build --apk --debug --target aarch64
+      - name: Build Android APK (debug, arm64-v8a only)
+        run: npx tauri android build --apk --debug --split-per-abi --target aarch64
+
+      - name: Verify Android APK is arm64-v8a only
+        shell: bash
+        run: |
+          mapfile -t apks < <(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' -print)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "Expected exactly one split APK, found ${#apks[@]}"
+            printf '%s\n' "${apks[@]}"
+            exit 1
+          fi
+          apk="${apks[0]}"
+          abis="$(unzip -Z1 "$apk" | awk -F/ '$1 == "lib" && NF >= 2 {print $2}' | sort -u)"
+          if [ "$abis" != "arm64-v8a" ]; then
+            echo "Expected only lib/arm64-v8a in $apk, found:"
+            printf '%s\n' "$abis"
+            exit 1
+          fi
+          echo "Verified arm64-v8a-only APK: $apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: tulpa-helper-android
+          name: tulpa-helper-android-arm64-v8a
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 14
