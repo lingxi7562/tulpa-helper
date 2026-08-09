@@ -232,8 +232,41 @@ jobs:
       - name: Init Android project
         run: npx tauri android init --ci
 
-      - name: Build Android APK (debug, arm64-v8a only)
-        run: npx tauri android build --apk --debug --split-per-abi --target aarch64
+      - name: Build Android APK (release, arm64-v8a only)
+        run: npx tauri android build --apk --split-per-abi --target aarch64
+
+      - name: Sign Android APK with ephemeral CI key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t unsigned < <(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*-release-unsigned.apk' -print)
+          if [ "${#unsigned[@]}" -ne 1 ]; then
+            echo "Expected exactly one unsigned release APK, found ${#unsigned[@]}"
+            printf '%s\n' "${unsigned[@]}"
+            exit 1
+          fi
+          input="${unsigned[0]}"
+          aligned="${RUNNER_TEMP}/tulpa-helper-arm64-v8a-aligned.apk"
+          keystore="${RUNNER_TEMP}/tulpa-helper-ci-signing.keystore"
+          password="$(openssl rand -hex 24)"
+          keytool -genkeypair -v -noprompt \
+            -keystore "$keystore" \
+            -storepass "$password" \
+            -keypass "$password" \
+            -alias tulpa-helper-ci \
+            -keyalg RSA -keysize 2048 -validity 2 \
+            -dname "CN=Tulpa Helper CI,O=Tulpa Helper,C=US"
+          build_tools="$ANDROID_HOME/build-tools/${ANDROID_BUILD_TOOLS}"
+          "$build_tools/zipalign" -P 16 -f 4 "$input" "$aligned"
+          output="${input%-release-unsigned.apk}-release.apk"
+          "$build_tools/apksigner" sign \
+            --ks "$keystore" \
+            --ks-pass "pass:${password}" \
+            --key-pass "pass:${password}" \
+            --out "$output" "$aligned"
+          "$build_tools/apksigner" verify --verbose "$output"
+          rm -f "$input" "$aligned" "$keystore"
+          echo "Created CI test-signed release APK: $output"
 
       - name: Verify Android APK is arm64-v8a only
         shell: bash

@@ -8,7 +8,7 @@ A Tauri v2 desktop app (React 19 + TypeScript + Tailwind CSS v4 + Zustand + SQLi
 npm install                  # install deps (Node ≥22, Rust required)
 npm run tauri dev            # dev mode with hot reload (Vite port 1420, fixed)
 npm run tauri build          # production desktop build
-npm run tauri android build -- --apk --debug --split-per-abi --target aarch64  # installable arm64-v8a debug APK (JDK 21 + SDK 36 + NDK 26.1)
+npm run tauri android build -- --apk --split-per-abi --target aarch64  # arm64-v8a release APK (JDK 21 + SDK 36 + NDK 26.1)
 ```
 
 Do NOT run `npm run dev` or `npm run build` standalone — use `npm run tauri dev` / `npm run tauri build`. The Tauri CLI orchestrates Vite; `npm run build` (`tsc && vite build`) is only invoked internally by `tauri build`.
@@ -29,14 +29,14 @@ Do NOT run `npm run dev` or `npm run build` standalone — use `npm run tauri de
 
 These are hard-won lessons from debugging the `.github/workflows/build.yml` Android job. Do NOT regress on any of these.
 
-### 1. APK is NOT installable by default
+### 1. APK signing and installability
 - Tauri v2 produces **unsigned** release APKs: `app-*-release-unsigned.apk`.
 - Android refuses to install unsigned APKs.
-- **Fix:** always build debug APKs on CI unless signing secrets are configured:
+- CI aligns and signs the arm64-v8a release APK with an ephemeral test key; it is installable for testing but is not a production signing key and cannot support upgrade continuity:
   ```bash
-  npx tauri android build --apk --debug --split-per-abi --target aarch64
+  npx tauri android build --apk --split-per-abi --target aarch64
   ```
-  Debug builds are self-signed with a debug keystore → installable.
+- Production distribution must replace the ephemeral key with a protected signing secret.
 
 ### 2. The `--apk` flag is mandatory
 - Without `--apk`, `tauri android build` produces **AAB** (Android App Bundle), not APK.
