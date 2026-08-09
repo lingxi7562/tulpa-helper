@@ -45,7 +45,7 @@ UI (React 组件)
 | `form_details` | 形态设计(五感) | sense_type(visual/audio/smell/touch/taste), description |
 | `deviations` | 偏离记录(trait/form 目标) | target_type, target_id, note, created_at |
 | `milestones` | 里程碑 | stage_id, title, achieved_at, notes |
-| `imposition_levels` | 感官临场等级 | sense_type(PK), level(1-4) |
+| `imposition_levels` | 感官临场描述（兼容表） | sense_type(PK), level(1-4) |
 
 `EntryType`(**15 种**,schema.ts:2-6 为准):`trait form session narration devotion dialogue wonderland signal imposition switch design dialogue_session practice autonomy resonance`。
 

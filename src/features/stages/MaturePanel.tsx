@@ -21,10 +21,10 @@ const SENSES = [
 ] as const;
 
 const IMPOSITION_STAGES = [
-  { level: 1, name: '存在感', desc: '能感知 Ta 在身旁' },
-  { level: 2, name: '闪现', desc: '偶尔捕捉到模糊轮廓' },
-  { level: 3, name: '稳定', desc: '持续可见的清晰形态' },
-  { level: 4, name: '不透明', desc: '无法看穿，完全清晰' },
+  { level: 1, name: '存在感', desc: '想象 Ta 和你共享同一个空间' },
+  { level: 2, name: '片段', desc: '偶尔捕捉到清晰的片段或轮廓' },
+  { level: 3, name: '维持', desc: '更容易在一段时间里保留临场感' },
+  { level: 4, name: '多感官', desc: '按需要探索视觉、听觉或触觉等入口' },
 ] as const;
 
 const MAX_LEVEL = 4;
@@ -101,7 +101,7 @@ export default function MaturePanel() {
       <Card hoverable={false}>
         <div className="mb-5">
           <h3 className="font-black text-brand-900">感官临场练习</h3>
-          <p className="mt-1 text-xs text-brand-400">这是可选的想象与临场感练习；一次只探索一种感受，不追求“看见”或“听见”的证明。</p>
+          <p className="mt-1 text-xs text-brand-400">这是可选的想象与临场感练习；一次只探索一种感受，不追求“看见”或“听见”的证明。下方描述只是帮助回顾，没有越高越好。</p>
         </div>
         <FormSummary embedded />
         {levelsError && (
@@ -131,7 +131,7 @@ export default function MaturePanel() {
                         onClick={() => handleLevel(sense.type, Math.max(1, lv - 1))}
                         disabled={isSaving || lv <= 1}
                         className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
-                        aria-label="减少等级"
+                        aria-label="选择上一个描述"
                       >−</button>
                       <span className="min-w-[2em] text-center text-xs font-black text-purple-700 tabular-nums">
                         {isSaving ? '…' : (IMPOSITION_STAGES[lv - 1]?.name || lv)}
@@ -140,7 +140,7 @@ export default function MaturePanel() {
                         onClick={() => handleLevel(sense.type, Math.min(MAX_LEVEL, lv + 1))}
                         disabled={isSaving || lv >= MAX_LEVEL}
                         className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
-                        aria-label="增加等级"
+                        aria-label="选择下一个描述"
                       >+</button>
                     </div>
                     <p className="mt-1 text-[9px] text-purple-400">{IMPOSITION_STAGES[lv - 1]?.desc}</p>
@@ -150,7 +150,7 @@ export default function MaturePanel() {
                     onClick={() => toggleEdit(sense.type)}
                     disabled={savingSense === sense.type}
                     className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
-                  >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
+                  >{IMPOSITION_STAGES[lv - 1]?.name || '未记录描述'}</button>
                 )}
               </div>
             );
@@ -186,7 +186,7 @@ export default function MaturePanel() {
                           onClick={() => handleLevel(sense.type, Math.max(1, lv - 1))}
                           disabled={isSaving || lv <= 1}
                           className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
-                          aria-label="减少等级"
+                        aria-label="选择上一个描述"
                         >−</button>
                         <span className="min-w-[2em] text-center text-xs font-black text-purple-700 tabular-nums">
                           {isSaving ? '…' : (IMPOSITION_STAGES[lv - 1]?.name || lv)}
@@ -195,7 +195,7 @@ export default function MaturePanel() {
                           onClick={() => handleLevel(sense.type, Math.min(MAX_LEVEL, lv + 1))}
                           disabled={isSaving || lv >= MAX_LEVEL}
                           className="grid h-7 w-7 place-items-center rounded-full bg-white text-lg font-bold text-purple-600 hover:bg-purple-100 disabled:opacity-30"
-                          aria-label="增加等级"
+                        aria-label="选择下一个描述"
                         >+</button>
                       </div>
                       <p className="mt-1 text-[9px] text-purple-400">{IMPOSITION_STAGES[lv - 1]?.desc}</p>
@@ -205,7 +205,7 @@ export default function MaturePanel() {
                       onClick={() => toggleEdit(sense.type)}
                       disabled={savingSense === sense.type}
                       className="mt-2 inline-flex min-h-8 items-center justify-center rounded-full px-2 text-[10px] font-black tracking-wider text-purple-400 hover:text-purple-600 disabled:opacity-30"
-                    >{IMPOSITION_STAGES[lv - 1]?.name || `LEVEL ${String(lv).padStart(2, '0')}`}</button>
+                    >{IMPOSITION_STAGES[lv - 1]?.name || '未记录描述'}</button>
                   )}
                 </div>
               );

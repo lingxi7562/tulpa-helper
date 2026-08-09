@@ -110,7 +110,7 @@ function isBackupFile(value: unknown): value is BackupFile {
     && impositionLevels.every(level => isRecord(level)
       && isString(level.sense_type, 20)
       && SENSE_TYPES.has(level.sense_type)
-      && isInteger(level.level, 1, 10));
+      && isInteger(level.level, 1, 4));
 }
 
 function readCompassPreference(): string | null {
