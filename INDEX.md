@@ -1,12 +1,12 @@
 # Tulpa Helper — 项目索引(图谱版)
 
-> 生成于 2026-07-31 · 基于 `master` @ f51539e(audit-batch7)
+> 复核于 2026-08-09 · 基于 `master` @ 8445e39
 > 知识图谱:597 nodes / 1405 edges(codebase-memory-mcp,项目名 `mnt-d-opencode-tulpa-helper`)
 > 注意:**README.md 已删除**(f51539e),以本索引与 `AGENTS.md` 为准。
 
 ## 项目速览
 
-温暖沉浸型的 Tulpa 创建辅助桌面应用(准备期 → 创建期 → 发展期 → 成熟期)。本地优先,无 AI/LLM。
+温暖沉浸型的 Tulpa 关系与练习辅助桌面应用(四个可回访章节：准备期 / 创建期 / 发展期 / 成熟期)。本地优先,无 AI/LLM。
 
 | 层 | 选型 |
 |---|---|
@@ -45,7 +45,7 @@ UI (React 组件)
 | `form_details` | 形态设计(五感) | sense_type(visual/audio/smell/touch/taste), description |
 | `deviations` | 偏离记录(trait/form 目标) | target_type, target_id, note, created_at |
 | `milestones` | 里程碑 | stage_id, title, achieved_at, notes |
-| `imposition_levels` | Imposition 等级 | sense_type(PK), level(1-10) |
+| `imposition_levels` | 感官临场等级 | sense_type(PK), level(1-4) |
 
 `EntryType`(**15 种**,schema.ts:2-6 为准):`trait form session narration devotion dialogue wonderland signal imposition switch design dialogue_session practice autonomy resonance`。
 
@@ -69,8 +69,8 @@ UI (React 组件)
 | `useTraitStore` | 特质 CRUD(name/description/weight/category) + 加载错误重试 |
 | `useTimerStore` | 番茄钟:start / pause / reset / tick / setSessionType / setDurationMinutes |
 | `useFormStore` | 五感形态 CRUD + 加载错误重试 |
-| `useMilestoneStore` | 里程碑庆祝检查(10/50/100 小时 → confetti)/ dismiss |
-| `useProfileStore` | tulpa 名称 |
+| `useMilestoneStore` | 可选时间标记(10/50/100 小时 → confetti)/ dismiss + 本地开关 |
+| `useProfileStore` | tulpa 名称 + 实践视角偏好(本地保存) |
 
 ## 视图层、hooks 与 lib
 
@@ -85,15 +85,15 @@ UI (React 组件)
 | 模块 | 文件 | 说明 |
 |---|---|---|
 | stages | PrepPanel / CreationPanel / DevelopmentPanel / MaturePanel / StageSidebar | 四阶段面板 + 侧边栏导航 |
-| forcing | FocusTimer | 番茄钟,compact/完整双模式,全阶段通用 |
+| forcing | FocusTimer | 陪伴计时器(内部保留 forcing 目录),compact/完整双模式,全阶段通用 |
 | dialogue | ScribbleInput / DialogueDisplay | 统一速记;`/T` 前缀解析 → `lib/dialogue.ts` |
 | traits | TraitManager / TraitSummary | 特质 CRUD + 摘要 |
 | form | FormBuilder / FormSummary | 五感表单构建器(视觉/听觉/嗅觉/触觉/味觉) |
 | wonderland | WonderlandEditor | Wonderland 构建(含草稿自动保存) |
-| journal | AutonomyLog / CommitmentConfirm / MilestoneList / PossessionLog / ResonanceTracker / SignalInput / SwitchingLog | 自主性观察、承诺确认、里程碑、附身/切换练习、共振追踪、回应信号 |
+| journal | AutonomyLog / CommitmentConfirm / MilestoneList / PossessionLog / PracticeGuardrail / ResonanceTracker / SignalInput / SwitchingLog | 自主性观察、承诺确认、手动里程碑、身体协作/视角切换、练习前同意护栏、共振追踪、回应信号 |
 | narration | QuickNarration | 顶栏快捷旁白入口 |
 | evolution | EvolutionLog | 演化/偏离记录 |
-| stats | StatsPanel / MilestoneCelebrate / BackupPanel | 全屏统计(总时长/阶段/7 天趋势/30 天热力图)、本地 JSON 备份合并 + confetti 庆祝 |
+| stats | StatsPanel / MilestoneCelebrate / BackupPanel | 全屏统计(总时长/阶段/7 天趋势/30 天热力图)、本地 JSON 备份合并 + 可选时间标记 |
 
 ## UI 基元(src/components/ui/,8 个 ✓)
 
@@ -139,9 +139,10 @@ Button / Card / Input / Badge / IconButton / Toast / Heatmap / EntryForm — 均
 
 - ✅ 2026-07-31 audit-batch7:A 类遗留 🟡 21 项全部修复(详见 AUDIT-2026-07-26.md「修复记录」)
 - ✅ 本轮已补齐本地 JSON 备份合并、时间线搜索、加载失败重试、关系安全检查、计时器持久化与数据迁移门禁
+- ✅ 2026-08-09 社区概念复审：术语中性化、实践视角本地偏好、换位/身体协作同意护栏、可选时间标记；详见 [`docs/TULPA-COMMUNITY-AUDIT-2026-08.md`](docs/TULPA-COMMUNITY-AUDIT-2026-08.md)
 - 产品体验候选:创建期计数卡片、StatsPanel 文案统一、历程概览去重、tags 结构化存储、imposition 历史轨迹、长页面折叠
 - Form/Wonderland 编辑器仍可继续做细节增强；当前版本已提供可用的五感表单与 Wonderland 编辑器
-- 情感共振图表交互、Switching/Possession 进度、日常陪伴热力图(iOS/移动端适配)可按用户反馈迭代
+- 情感共振图表交互、视角切换/身体协作历史轨迹、日常陪伴热力图(iOS/移动端适配)可按用户反馈迭代
 
 ## 图谱使用指引(codebase-memory-mcp)
 
